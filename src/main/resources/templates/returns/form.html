@@ -12,6 +12,7 @@
         <div class="mb-3">
           <label class="form-label" for="orderNumber">Order number</label>
           <input type="text" class="form-control" th:field="*{orderNumber}"
+               maxlength="30"
                  th:classappend="${#fields.hasErrors('orderNumber')} ? 'is-invalid'">
           <div class="invalid-feedback" th:if="${#fields.hasErrors('orderNumber')}" th:errors="*{orderNumber}">Error</div>
         </div>
@@ -19,6 +20,7 @@
         <div class="mb-3">
           <label class="form-label" for="customerName">Customer name</label>
           <input type="text" class="form-control" th:field="*{customerName}"
+               maxlength="80"
                  th:classappend="${#fields.hasErrors('customerName')} ? 'is-invalid'">
           <div class="invalid-feedback" th:if="${#fields.hasErrors('customerName')}" th:errors="*{customerName}">Error</div>
         </div>
@@ -26,6 +28,7 @@
         <div class="mb-3">
           <label class="form-label" for="productName">Product name</label>
           <input type="text" class="form-control" th:field="*{productName}"
+               maxlength="100"
                  th:classappend="${#fields.hasErrors('productName')} ? 'is-invalid'">
           <div class="invalid-feedback" th:if="${#fields.hasErrors('productName')}" th:errors="*{productName}">Error</div>
         </div>
@@ -40,6 +43,7 @@
         <div class="mb-3">
           <label class="form-label" for="reason">Reason for return</label>
           <textarea class="form-control" rows="3" th:field="*{reason}"
+                    maxlength="255"
                     th:classappend="${#fields.hasErrors('reason')} ? 'is-invalid'"></textarea>
           <div class="invalid-feedback" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}">Error</div>
         </div>

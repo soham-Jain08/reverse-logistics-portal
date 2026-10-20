@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.data.domain.Page;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -81,5 +81,10 @@ class ReturnRequestWorkflowTests {
         Assertions.assertTrue(stats.getRefundedCount() > 0);
         Assertions.assertNotNull(stats.getTotalRefunded());
         Assertions.assertFalse(stats.getRecentReturns().isEmpty());
+
+        // 8. Test search with status filter
+        Page<ReturnRequest> filterResult = service.search(customer, "", "REFUNDED", "", 0);
+        System.out.println("DEBUG_FILTER_COUNT=" + filterResult.getTotalElements());
+        Assertions.assertTrue(filterResult.getTotalElements() > 0, "Filter by status REFUNDED should find records");
     }
 }

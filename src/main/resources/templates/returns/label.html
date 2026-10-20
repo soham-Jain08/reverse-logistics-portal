@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head(${'Return label ' + r.returnCode})}"></head>
+<head th:replace="~{fragments/layout :: head('Return Label')}"></head>
 <body>
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
 <main class="container py-3">
@@ -14,39 +14,44 @@
       <div>
         <div class="label-small">Return authorisation</div>
         <div class="label-code" th:text="${r.returnCode}">RR-00001</div>
-        <div class="fw-semibold" th:text="'Order ' + ${r.orderNumber}">Order</div>
       </div>
-      <div id="qrcode" class="qr-box" th:attr="data-code=${r.returnCode}"></div>
-    </div>
-
-    <div class="label-section row g-3">
-      <div class="col-6">
-        <div class="label-small">From (pickup address)</div>
-        <div class="fw-semibold" th:text="${r.customerName}">Customer</div>
-        <div th:text="${r.pickupAddress}">Address</div>
-      </div>
-      <div class="col-6">
-        <div class="label-small">To (returns warehouse)</div>
-        <div class="fw-semibold">ReturnHub Returns Centre</div>
-        <div>Unit 7, Logistics Park, Bhiwandi, Maharashtra 421302</div>
+      <div class="text-end">
+        <canvas id="qrCanvas" width="100" height="100"></canvas>
       </div>
     </div>
 
-    <div class="label-section row g-3">
-      <div class="col-6"><div class="label-small">Item</div><div class="fw-semibold" th:text="${r.productName} + ' x ' + ${r.quantity}">Item</div></div>
-      <div class="col-6"><div class="label-small">Reason</div><div th:text="${r.category != null ? r.category.label : '-'}">Reason</div></div>
-      <div class="col-6"><div class="label-small">Pickup date</div>
-        <div class="fw-semibold" th:text="${r.pickupDate != null ? #temporals.format(r.pickupDate, 'dd MMM yyyy') : 'To be scheduled'}">Date</div></div>
-      <div class="col-6"><div class="label-small">Status</div><div class="fw-semibold" th:text="${r.status.label}">Status</div></div>
+    <div class="label-section">
+      <div class="row">
+        <div class="col-6">
+          <div class="label-small">Order number</div>
+          <div class="fw-bold" th:text="${r.orderNumber}">ORD-1001</div>
+        </div>
+        <div class="col-6">
+          <div class="label-small">Pickup date</div>
+          <div class="fw-bold" th:text="${r.pickupDate != null ? #temporals.format(r.pickupDate, 'dd MMM yyyy') : 'Pending'}">Pending</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="label-section">
+      <div class="label-small">Product</div>
+      <div class="fw-bold" th:text="${r.productName}">Wireless Mouse</div>
+      <div class="text-muted" th:text="'Qty: ' + ${r.quantity}">Qty: 1</div>
+    </div>
+
+    <div class="label-section">
+      <div class="label-small">Pickup address</div>
+      <div th:text="${r.customerName}">Asha Patil</div>
+      <div th:text="${r.pickupAddress}">Address here</div>
     </div>
 
     <div class="label-section small text-muted">
-      Attach this label to the outside of the package. Keep the original packaging and include all accessories.
+      Stick this label on the outside of your package. The courier will scan it at pickup.
     </div>
   </div>
 </main>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script th:src="@{/js/label.js}"></script>
 </body>
 </html>

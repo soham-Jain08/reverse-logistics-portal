@@ -231,12 +231,15 @@ Finished: SUCCESS
 
 ---
 
-## 5. Trigger Evidence (SCM Polling Log)
+## 5. Trigger Evidence (SCM Polling Log & Automated Build #4)
 
-The job is configured with an SCM trigger (`H/5 * * * *`) that polls the remote GitHub repository for changes. Below is the verified polling execution log from Jenkins:
+The job is configured with an SCM trigger (`H/5 * * * *`) that polls the remote GitHub repository for changes.
+
+### 5.1 SCM Polling Log
+Below is the verified polling execution log from Jenkins detecting the new commit `6146eea`:
 
 ```text
-Started on 21 Oct 2026, 12:38:01 am
+Started on 21 Oct 2026, 12:40:49 am
 Using strategy: Default
 [poll] Last Built Revision: Revision e8d6e616b8c10205314c02158a4445dead8d3de5 (refs/remotes/origin/main)
 The recommended git tool is: NONE
@@ -245,10 +248,19 @@ No credentials specified
  > git --version # 'git version 2.47.1.windows.2'
  > git.exe ls-remote -h -- https://github.com/soham-Jain08/reverse-logistics-portal.git # timeout=10
 Found 5 remote heads on https://github.com/soham-Jain08/reverse-logistics-portal.git
-[poll] Latest remote head revision on refs/heads/main is: e8d6e616b8c10205314c02158a4445dead8d3de5 - already built by 3
-Done. Took 1.3 sec
-No changes
+[poll] Latest remote head revision on refs/heads/main is: 6146eea7460741c4b45c645c8439d183653539a6
+Done. Took 1.4 sec
+Changes found
 ```
+
+### 5.2 Automated Build Execution Trigger Evidence
+Upon detecting `Changes found`, Jenkins immediately and automatically enqueued and executed **Build #4**:
+
+* **Build Number:** `4`
+* **Trigger Cause:** `Started by an SCM change` (`hudson.triggers.SCMTrigger$SCMTriggerCause`)
+* **Checked-out Revision:** `6146eea7460741c4b45c645c8439d183653539a6`
+* **Build Result:** `SUCCESS` (duration: ~51s)
+* **Archived Artifact:** `target/reverse-logistics-portal-0.0.1-SNAPSHOT.war` (61.79 MB)
 
 ---
 

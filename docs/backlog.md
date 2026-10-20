@@ -3,7 +3,7 @@
 **Project:** Automated Reverse Logistics Management Portal  
 **Student:** Soham Kholapure (Roll No. 23102A0064, BE CMPN A)  
 **Methodology:** Agile Scrum (3 Sprints, 15 Tasks)  
-**Last Updated:** Sprint 2 (Task 7 Jenkins CI Job Completion)
+**Last Updated:** Sprint 2 (Task 8 Pipeline as Code and Server Deployment Completion)
 
 ---
 
@@ -18,7 +18,7 @@
 | | **TASK-05** | Feature Development with Branching | Feature | **DONE** | Feature branch 1, PR, Merge into `develop` |
 | **Sprint 2** | **TASK-06** | MVP Completion & Git Collaboration | Integration | **DONE** | Functional MVP, Conflict Resolution, Tagging |
 | | **TASK-07** | Jenkins Installation & Continuous Integration Job | CI/CD | **DONE** | Configured Jenkins Job, Build Log, Polling Trigger, Archived WAR |
-| | **TASK-08** | Unit Testing & Automated Test Execution in CI | Quality | Backlog | JUnit test suite & automated test execution |
+| | **TASK-08** | Pipeline as Code & Server Deployment | CI/CD | **DONE** | Jenkinsfile, Pipeline Run Log, Tomcat Deployment on Port 8082 |
 | | **TASK-09** | Static Code Analysis & Linting | Quality | Backlog | Checkstyle / SpotBugs / SonarQube setup |
 | | **TASK-10** | Automated Test Integration in CI | CI/CD | Backlog | Automated test stage in Jenkins |
 | **Sprint 3** | **TASK-11** | Containerization with Docker | Containers | Backlog | Dockerfile, Containerized app & test |
@@ -55,7 +55,7 @@
 
 ---
 
-### Sprint 2: MVP Completion, Git Collaboration & CI Pipeline
+### Sprint 2: MVP Completion, Git Collaboration & CI/CD Pipelines
 
 #### TASK-06: MVP Completion and Git Collaboration — COMPLETED
 * **User Story:** As an operations manager and customer, I want a fully functioning Reverse Logistics MVP with complete CRUD, role-based workflows, search filters, and an operational summary dashboard, developed using DevOps Git collaboration practices.
@@ -97,7 +97,6 @@
      - Jenkins LTS (v2.580.1) installed and operational on designated CI port `http://localhost:8080/`.
      - Configured with `JENKINS_HOME=C:\jenkins\home`.
      - Essential CI plugins installed: `git`, `git-client`, `credentials`, `scm-api`, `timestamper`, `ws-cleanup`.
-     - Security realm and admin access configured.
   2. **GitHub SCM Integration:**
      - Connected remote repository: `https://github.com/soham-Jain08/reverse-logistics-portal.git`.
      - Monitored release branch: `*/main`.
@@ -118,11 +117,37 @@
   - [x] Build artifact `reverse-logistics-portal-0.0.1-SNAPSHOT.war` archived and downloadable.
   - [x] Comprehensive evidence documented in `docs/TASK7-DELIVERY.md`.
 
+#### TASK-08: Pipeline as Code and Server Deployment — COMPLETED
+* **User Story:** As a DevOps engineer, I want to define our entire CI/CD delivery lifecycle as code using a version-controlled `Jenkinsfile` with distinct stages (Checkout, Build & Test, Package, Deploy to Server), parameterize target environment configurations, and automatically deploy the packaged application to an Apache Tomcat server on port 8082 with automated post-deployment health verification.
+* **Scope & Completed Capabilities:**
+  1. **Pipeline as Code (`Jenkinsfile`):**
+     - Declarative pipeline defined in repo root and version-controlled on GitHub.
+     - 4 Core Stages: `Checkout`, `Build & Test`, `Package`, `Deploy to Server`.
+  2. **Environment Parameterization:**
+     - `DEPLOY_ENV`: Choice parameter (`production`, `staging`, `development`).
+     - `TOMCAT_PORT`: Target server port (default `8082`).
+     - `TOMCAT_WEBAPPS`: Filesystem target for WAR deployment (`C:\Users\CSC\tomcat\apache-tomcat-10.1.61\webapps`).
+     - `CONTEXT_PATH`: Context path root (`reverse-logistics-portal`).
+  3. **Server Deployment (Apache Tomcat on Port 8082):**
+     - Apache Tomcat 10.1.61 installed and running on port `8082`.
+     - `ReverseLogisticsPortalApplication` updated to extend `SpringBootServletInitializer` for container compatibility.
+     - Automated hot deployment of `reverse-logistics-portal.war` to Tomcat webapps.
+  4. **Verification & Pipeline Runs:**
+     - Pipeline Build #1 (Production): **SUCCESS**.
+     - Pipeline Build #2 (Parameterized Staging): **SUCCESS**.
+     - Live application URL verified: `http://localhost:8082/reverse-logistics-portal/` (HTTP 200).
+* **Definition of Done (DoD) Checklist:**
+  - [x] `Jenkinsfile` created, committed, and pushed to GitHub repository root.
+  - [x] Pipeline parameters configured and tested (`DEPLOY_ENV`, `TOMCAT_PORT`, `CONTEXT_PATH`).
+  - [x] Apache Tomcat configured and verified running on port `8082`.
+  - [x] Automated copy/deployment to Tomcat webapps executed within the pipeline.
+  - [x] Post-deployment automated health check returns HTTP 200.
+  - [x] Comprehensive evidence documented in `docs/TASK8-DELIVERY.md`.
+
 ---
 
-## 3. Upcoming Sprint Backlog (Tasks 8 to 15)
+## 3. Upcoming Sprint Backlog (Tasks 9 to 15)
 
-* **TASK-08 (Sprint 2):** Unit Testing & Automated Test Execution in CI (JUnit 5 + Mockito).
 * **TASK-09 (Sprint 2):** Static Code Analysis & Linting (Checkstyle / SpotBugs / SonarQube).
 * **TASK-10 (Sprint 2):** Automated Test Integration in CI Pipeline.
 * **TASK-11 (Sprint 3):** Docker containerization (multi-stage build, minimal Alpine/Eclipse-Temurin JRE).

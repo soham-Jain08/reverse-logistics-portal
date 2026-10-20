@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-4">
+  <div th:replace="~{fragments/layout :: flash}"></div>
+
+  <!-- Page Header -->
+  <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <h1 class="h3 mb-0">Summary Dashboard</h1>
+        <span class="role-pill" th:text="${currentUser.role.label}">Role</span>
+      </div>
+      <p class="text-muted mb-0"
+         th:if="${currentUser.customer}">Real-time overview of your submitted return requests and refunds.</p>
+      <p class="text-muted mb-0"
+         th:if="${currentUser.manager}">Operations overview: pending approvals, pickup schedules, and refund metrics.</p>
+      <p class="text-muted mb-0"
+         th:if="${currentUser.warehouse}">Warehouse floor overview: expected packages, inspection queues, and restocking.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary" th:if="${!currentUser.customer}" th:href="@{/returns/export}">
+        <i class="bi bi-download me-1"></i>Export CSV
+      </a>
+      <a class="btn btn-outline-primary" th:href="@{/returns}">
+        <i class="bi bi-list-check me-1"></i>All Returns
+      </a>
+      <a class="btn btn-primary" id="newReturnBtn" th:if="${currentUser.customer}" th:href="@{/returns/new}">
+        <i class="bi bi-plus-lg me-1"></i>New Return
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Metrics Cards Row -->
+  <div class="row g-3 mb-4">
+    <!-- Total Returns -->
+    <div class="col-sm-6 col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="kpi">
+          <div class="kpi-icon bg-primary-subtle text-primary">
+            <i class="bi bi-box-seam"></i>
+          </div>
+          <div>
+            <div class="kpi-value" th:text="${stats.totalReturns}">0</div>
+            <div class="kpi-label" th:text="${currentUser.customer} ? 'My returns' : 'Total returns'">Total returns</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Required -->
+    <div class="col-sm-6 col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="kpi">
+          <div class="kpi-icon bg-warning-subtle text-warning-emphasis">
+            <i class="bi bi-clock-history"></i>
+          </div>
+          <div>
+            <div class="kpi-value text-warning-emphasis" th:text="${stats.pendingActionCount}">0</div>
+            <div class="kpi-label">Active / In Progress</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- In Transit / Pickup Scheduled -->
+    <div class="col-sm-6 col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="kpi">
+          <div class="kpi-icon bg-info-subtle text-info-emphasis">
+            <i class="bi bi-truck"></i>
+          </div>
+          <div>
+            <div class="kpi-value text-info-emphasis" th:text="${stats.pickupScheduledCount}">0</div>
+            <div class="kpi-label">Courier pickups</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Refunded -->
+    <div class="col-sm-6 col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="kpi">
+          <div class="kpi-icon bg-success-subtle text-success">
+            <i class="bi bi-currency-rupee"></i>
+          </div>
+          <div>
+            <div class="kpi-value text-success" th:text="'₹' + ${#numbers.formatDecimal(stats.totalRefunded, 1, 'COMMA', 2, 'POINT')}">₹0.00</div>
+            <div class="kpi-label">Refunds processed</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Role-Specific Action Queues -->
+  <div class="row g-3 mb-4" th:if="${!currentUser.customer}">
+    <div class="col-md-4">
+      <a class="card shadow-sm queue-card queue-warning" th:href="@{/returns(status='REQUESTED')}">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-uppercase small fw-bold text-muted mb-1">Awaiting Approval</div>
+            <div class="q-count text-warning-emphasis" th:text="${stats.requestedCount}">0</div>
+          </div>
+          <i class="bi bi-hourglass-split fs-2 text-warning"></i>
+        </div>
+        <div class="small text-muted mt-2">New customer return requests</div>
+      </a>
+    </div>
+
+    <div class="col-md-4">
+      <a class="card shadow-sm queue-card queue-primary" th:href="@{/returns(status='PICKUP_SCHEDULED')}">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-uppercase small fw-bold text-muted mb-1">Expected Deliveries</div>
+            <div class="q-count text-primary" th:text="${stats.pickupScheduledCount}">0</div>
+          </div>
+          <i class="bi bi-box-arrow-in-down fs-2 text-primary"></i>
+        </div>
+        <div class="small text-muted mt-2">Items currently in transit to warehouse</div>
+      </a>
+    </div>
+
+    <div class="col-md-4">
+      <a class="card shadow-sm queue-card queue-info" th:href="@{/returns(status='RECEIVED')}">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-uppercase small fw-bold text-muted mb-1">Inspection Queue</div>
+            <div class="q-count text-info-emphasis" th:text="${stats.receivedCount}">0</div>
+          </div>
+          <i class="bi bi-search fs-2 text-info"></i>
+        </div>
+        <div class="small text-muted mt-2">Packages received awaiting QA inspection</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Status Distribution Pipeline -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-diagram-3 me-2 text-primary"></i>Lifecycle Stage Distribution</span>
+      <span class="badge bg-secondary-subtle text-secondary" th:text="${stats.totalReturns} + ' Total'">9 Total</span>
+    </div>
+    <div class="card-body">
+      <div class="row text-center g-2">
+        <div class="col-6 col-md-4 col-lg-2">
+          <a th:href="@{/returns(status='REQUESTED')}" class="text-decoration-none">
+            <div class="p-2 rounded bg-light border">
+              <span class="status-badge status-REQUESTED d-inline-block mb-1">Requested</span>
+              <div class="h5 mb-0 fw-bold" th:text="${stats.requestedCount}">0</div>
+            </div>
+          </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <a th:href="@{/returns(status='APPROVED')}" class="text-decoration-none">
+            <div class="p-2 rounded bg-light border">
+              <span class="status-badge status-APPROVED d-inline-block mb-1">Approved</span>
+              <div class="h5 mb-0 fw-bold" th:text="${stats.approvedCount}">0</div>
+            </div>
+          </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <a th:href="@{/returns(status='PICKUP_SCHEDULED')}" class="text-decoration-none">
+            <div class="p-2 rounded bg-light border">
+              <span class="status-badge status-PICKUP_SCHEDULED d-inline-block mb-1">In Transit</span>
+              <div class="h5 mb-0 fw-bold" th:text="${stats.pickupScheduledCount}">0</div>
+            </div>
+          </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <a th:href="@{/returns(status='RECEIVED')}" class="text-decoration-none">
+            <div class="p-2 rounded bg-light border">
+              <span class="status-badge status-RECEIVED d-inline-block mb-1">Received</span>
+              <div class="h5 mb-0 fw-bold" th:text="${stats.receivedCount}">0</div>
+            </div>
+          </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <a th:href="@{/returns(status='INSPECTED')}" class="text-decoration-none">
+            <div class="p-2 rounded bg-light border">
+              <span class="status-badge status-INSPECTED d-inline-block mb-1">Inspected</span>
+              <div class="h5 mb-0 fw-bold" th:text="${stats.inspectedCount}">0</div>
+            </div>
+          </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <a th:href="@{/returns(status='REFUNDED')}" class="text-decoration-none">
+            <div class="p-2 rounded bg-light border">
+              <span class="status-badge status-REFUNDED d-inline-block mb-1">Refunded</span>
+              <div class="h5 mb-0 fw-bold text-success" th:text="${stats.refundedCount}">0</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Return Requests Table -->
+  <div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-clock-history me-2 text-primary"></i>Recent Return Activity</span>
+      <a class="btn btn-sm btn-outline-primary" th:href="@{/returns}">View all records</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table align-middle table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Return Code</th>
+            <th>Order #</th>
+            <th th:if="${!currentUser.customer}">Customer</th>
+            <th>Product</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Refund Amount</th>
+            <th>Date</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:if="${stats.recentReturns == null or stats.recentReturns.empty}">
+            <td colspan="9" class="text-center py-4 text-muted">No return requests found.</td>
+          </tr>
+          <tr th:each="r : ${stats.recentReturns}">
+            <td>
+              <a class="fw-semibold text-primary text-decoration-none" th:href="@{/returns/{id}(id=${r.id})}" th:text="${r.returnCode}">RR-00001</a>
+            </td>
+            <td th:text="${r.orderNumber}">ORD-1001</td>
+            <td th:if="${!currentUser.customer}" th:text="${r.customerName}">Asha Patil</td>
+            <td>
+              <div class="fw-medium" th:text="${r.productName}">Wireless Mouse</div>
+              <div class="small text-muted" th:text="'Qty: ' + ${r.quantity}">Qty: 1</div>
+            </td>
+            <td>
+              <span class="small text-muted" th:text="${r.category != null ? r.category.label : 'General'}">Defective</span>
+            </td>
+            <td>
+              <span th:replace="~{fragments/layout :: statusBadge(${r.status})}"></span>
+            </td>
+            <td>
+              <span th:if="${r.refundAmount != null}" class="fw-semibold text-success"
+                    th:text="'₹' + ${#numbers.formatDecimal(r.refundAmount, 1, 'COMMA', 2, 'POINT')}">₹0.00</span>
+              <span th:if="${r.refundAmount == null}" class="text-muted small">&mdash;</span>
+            </td>
+            <td class="small text-muted" th:text="${#temporals.format(r.createdAt, 'dd MMM yyyy')}">20 Oct 2026</td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-secondary" th:href="@{/returns/{id}(id=${r.id})}">
+                <i class="bi bi-eye"></i> View
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

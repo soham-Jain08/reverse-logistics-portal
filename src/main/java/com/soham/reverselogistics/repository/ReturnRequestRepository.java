@@ -1,6 +1,8 @@
 package com.soham.reverselogistics.repository;
 
 import com.soham.reverselogistics.model.ReturnRequest;
+import com.soham.reverselogistics.model.ReturnStatus;
+import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,4 +30,20 @@ public interface ReturnRequestRepository extends JpaRepository<ReturnRequest, Lo
                                Pageable pageable);
 
     List<ReturnRequest> findByCreatedBy(String createdBy);
+
+    long countByCreatedBy(String createdBy);
+
+    long countByStatus(ReturnStatus status);
+
+    long countByStatusAndCreatedBy(ReturnStatus status, String createdBy);
+
+    List<ReturnRequest> findTop6ByOrderByCreatedAtDesc();
+
+    List<ReturnRequest> findTop6ByCreatedByOrderByCreatedAtDesc(String createdBy);
+
+    @Query("select coalesce(sum(r.refundAmount), 0) from ReturnRequest r where r.status = com.soham.reverselogistics.model.ReturnStatus.REFUNDED")
+    BigDecimal sumRefundedAmount();
+
+    @Query("select coalesce(sum(r.refundAmount), 0) from ReturnRequest r where r.status = com.soham.reverselogistics.model.ReturnStatus.REFUNDED and r.createdBy = :createdBy")
+    BigDecimal sumRefundedAmountByCreatedBy(@Param("createdBy") String createdBy);
 }

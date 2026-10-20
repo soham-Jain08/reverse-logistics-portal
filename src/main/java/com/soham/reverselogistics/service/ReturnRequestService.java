@@ -1,6 +1,7 @@
 package com.soham.reverselogistics.service;
 
 import com.soham.reverselogistics.dto.ActionForm;
+import com.soham.reverselogistics.dto.DashboardStats;
 import com.soham.reverselogistics.dto.NotesForm;
 import com.soham.reverselogistics.dto.ReturnRequestForm;
 import com.soham.reverselogistics.model.ReturnAction;
@@ -15,7 +16,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -70,6 +73,56 @@ public class ReturnRequestService {
     @Transactional(readOnly = true)
     public List<StatusHistory> history(Long id) {
         return historyRepository.findByRequestIdOrderByChangedAtAsc(id);
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardStats getDashboardStats(CurrentUser user) {
+        DashboardStats stats = new DashboardStats();
+        boolean isCustomer = user.isCustomer();
+        String username = user.getUsername();
+
+        long total = isCustomer ? repository.countByCreatedBy(username) : repository.count();
+        stats.setTotalReturns(total);
+
+        Map<ReturnStatus, Long> counts = new EnumMap<>(ReturnStatus.class);
+        for (ReturnStatus s : ReturnStatus.values()) {
+            long c = isCustomer
+                    ? repository.countByStatusAndCreatedBy(s, username)
+                    : repository.countByStatus(s);
+            counts.put(s, c);
+        }
+        stats.setStatusCounts(counts);
+
+        stats.setRequestedCount(counts.getOrDefault(ReturnStatus.REQUESTED, 0L));
+        stats.setApprovedCount(counts.getOrDefault(ReturnStatus.APPROVED, 0L));
+        stats.setPickupScheduledCount(counts.getOrDefault(ReturnStatus.PICKUP_SCHEDULED, 0L));
+        stats.setReceivedCount(counts.getOrDefault(ReturnStatus.RECEIVED, 0L));
+        stats.setInspectedCount(counts.getOrDefault(ReturnStatus.INSPECTED, 0L));
+        stats.setRefundedCount(counts.getOrDefault(ReturnStatus.REFUNDED, 0L));
+        stats.setRestockedCount(counts.getOrDefault(ReturnStatus.RESTOCKED, 0L));
+        stats.setDisposedCount(counts.getOrDefault(ReturnStatus.DISPOSED, 0L));
+        stats.setRejectedCount(counts.getOrDefault(ReturnStatus.REJECTED, 0L));
+
+        BigDecimal refunded = isCustomer
+                ? repository.sumRefundedAmountByCreatedBy(username)
+                : repository.sumRefundedAmount();
+        stats.setTotalRefunded(refunded);
+
+        List<ReturnRequest> recent = isCustomer
+                ? repository.findTop6ByCreatedByOrderByCreatedAtDesc(username)
+                : repository.findTop6ByOrderByCreatedAtDesc();
+        stats.setRecentReturns(recent);
+
+        if (isCustomer) {
+            stats.setPendingActionCount(stats.getRequestedCount() + stats.getApprovedCount()
+                    + stats.getPickupScheduledCount() + stats.getReceivedCount() + stats.getInspectedCount());
+        } else if (user.isManager()) {
+            stats.setPendingActionCount(stats.getRequestedCount() + stats.getApprovedCount() + stats.getInspectedCount());
+        } else {
+            stats.setPendingActionCount(stats.getPickupScheduledCount() + stats.getReceivedCount());
+        }
+
+        return stats;
     }
 
     // --------------------------------------------------------------- creating

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${'Return label ' + r.returnCode})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="container py-3">
+  <div class="text-center no-print">
+    <button type="button" class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print label</button>
+    <a class="btn btn-outline-secondary" th:href="@{/returns/{id}(id=${r.id})}">Back to request</a>
+  </div>
+
+  <div class="label-sheet">
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <div class="label-small">Return authorisation</div>
+        <div class="label-code" th:text="${r.returnCode}">RR-00001</div>
+        <div class="fw-semibold" th:text="'Order ' + ${r.orderNumber}">Order</div>
+      </div>
+      <div id="qrcode" class="qr-box" th:attr="data-code=${r.returnCode}"></div>
+    </div>
+
+    <div class="label-section row g-3">
+      <div class="col-6">
+        <div class="label-small">From (pickup address)</div>
+        <div class="fw-semibold" th:text="${r.customerName}">Customer</div>
+        <div th:text="${r.pickupAddress}">Address</div>
+      </div>
+      <div class="col-6">
+        <div class="label-small">To (returns warehouse)</div>
+        <div class="fw-semibold">ReturnHub Returns Centre</div>
+        <div>Unit 7, Logistics Park, Bhiwandi, Maharashtra 421302</div>
+      </div>
+    </div>
+
+    <div class="label-section row g-3">
+      <div class="col-6"><div class="label-small">Item</div><div class="fw-semibold" th:text="${r.productName} + ' x ' + ${r.quantity}">Item</div></div>
+      <div class="col-6"><div class="label-small">Reason</div><div th:text="${r.category != null ? r.category.label : '-'}">Reason</div></div>
+      <div class="col-6"><div class="label-small">Pickup date</div>
+        <div class="fw-semibold" th:text="${r.pickupDate != null ? #temporals.format(r.pickupDate, 'dd MMM yyyy') : 'To be scheduled'}">Date</div></div>
+      <div class="col-6"><div class="label-small">Status</div><div class="fw-semibold" th:text="${r.status.label}">Status</div></div>
+    </div>
+
+    <div class="label-section small text-muted">
+      Attach this label to the outside of the package. Keep the original packaging and include all accessories.
+    </div>
+  </div>
+</main>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script th:src="@{/js/label.js}"></script>
+</body>
+</html>

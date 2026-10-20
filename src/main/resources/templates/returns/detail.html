@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${r.returnCode})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="container py-4">
+  <div th:replace="~{fragments/layout :: flash}"></div>
+
+  <!-- Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+      <a class="text-decoration-none small" th:href="@{/returns}"><i class="bi bi-arrow-left me-1"></i>Back to returns</a>
+      <h1 class="h3 mt-1 mb-1 d-flex align-items-center gap-3 flex-wrap">
+        <span id="returnCode" th:text="${r.returnCode}">RR-00001</span>
+        <span id="statusBadge" th:replace="~{fragments/layout :: statusBadge(${r.status})}"></span>
+      </h1>
+      <div class="text-muted"><span th:text="${r.productName}">Product</span> &middot; Order <span th:text="${r.orderNumber}">ORD</span></div>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-primary" id="editBtn" th:if="${canEdit}" th:href="@{/returns/{id}/edit(id=${r.id})}">
+        <i class="bi bi-pencil me-1"></i>Edit request</a>
+      <a class="btn btn-outline-secondary" id="labelBtn" th:if="${canPrintLabel}" th:href="@{/returns/{id}/label(id=${r.id})}" target="_blank">
+        <i class="bi bi-printer me-1"></i>Return label</a>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="card mb-4">
+    <div class="card-body p-4">
+      <div th:if="${r.status.name() == 'REJECTED'}" class="alert alert-danger mb-0" id="rejectedBox">
+        <i class="bi bi-x-octagon-fill me-2"></i><b>This request was rejected.</b>
+        <span th:if="${r.remarks != null}" th:text="${r.remarks}">Reason</span>
+      </div>
+      <ol class="stepper" th:if="${r.status.name() != 'REJECTED'}" id="progressSteps">
+        <li class="step" th:each="s, iter : ${steps}"
+            th:classappend="${iter.count < r.status.step or (iter.count == r.status.step and r.status.closed)} ? 'done' : (${iter.count == r.status.step} ? 'current' : '')">
+          <div class="dot"><i class="bi bi-check-lg" th:if="${iter.count < r.status.step or (iter.count == r.status.step and r.status.closed)}"></i>
+            <span th:unless="${iter.count < r.status.step or (iter.count == r.status.step and r.status.closed)}" th:text="${iter.count}">1</span></div>
+          <div th:text="${s}">Step</div>
+        </li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- LEFT: details and notes -->
+    <div class="col-lg-7">
+      <div class="card mb-4">
+        <div class="card-header">Request details</div>
+        <div class="card-body">
+          <dl class="row detail-list mb-0">
+            <div class="col-sm-6"><dt>Customer</dt><dd th:text="${r.customerName}">Name</dd></div>
+            <div class="col-sm-6"><dt>Order number</dt><dd th:text="${r.orderNumber}">ORD</dd></div>
+            <div class="col-sm-6"><dt>Product</dt><dd><span th:text="${r.productName}">Product</span> &times; <span th:text="${r.quantity}">1</span></dd></div>
+            <div class="col-sm-6"><dt>Reason category</dt><dd th:text="${r.category != null ? r.category.label : '-'}">Category</dd></div>
+            <div class="col-12"><dt>Problem description</dt><dd th:text="${r.reason}">Reason</dd></div>
+            <div class="col-12"><dt>Pickup address</dt><dd th:text="${r.pickupAddress != null ? r.pickupAddress : '-'}">Address</dd></div>
+            <div class="col-sm-6"><dt>Pickup date</dt><dd id="pickupDate" th:text="${r.pickupDate != null ? #temporals.format(r.pickupDate, 'dd MMM yyyy') : 'Not scheduled yet'}">Date</dd></div>
+            <div class="col-sm-6"><dt>Refund amount</dt>
+              <dd id="refundAmount" th:text="${r.refundAmount != null ? '₹ ' + #numbers.formatDecimal(r.refundAmount, 1, 'COMMA', 2, 'POINT') : '-'}">-</dd></div>
+            <div class="col-12" th:if="${r.remarks != null}"><dt>Manager remarks</dt><dd th:text="${r.remarks}">Remarks</dd></div>
+            <div class="col-12" th:if="${r.inspectionRemarks != null}"><dt>Inspection remarks</dt><dd th:text="${r.inspectionRemarks}">Remarks</dd></div>
+            <div class="col-sm-6"><dt>Created</dt><dd th:text="${#temporals.format(r.createdAt, 'dd MMM yyyy, HH:mm')}">Date</dd></div>
+            <div class="col-sm-6"><dt>Last updated</dt><dd th:text="${r.updatedAt != null ? #temporals.format(r.updatedAt, 'dd MMM yyyy, HH:mm') : '-'}">Date</dd></div>
+          </dl>
+        </div>
+      </div>
+
+      <!-- Notes (staff only, while open) -->
+      <div class="card" th:if="${canAnnotate}">
+        <div class="card-header"><i class="bi bi-journal-text me-1"></i>Update notes</div>
+        <div class="card-body">
+          <form th:action="@{/returns/{id}/notes(id=${r.id})}" method="post" id="notesForm">
+            <div th:if="${currentUser.manager}">
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="notesRemarks">Manager remarks</label>
+                <textarea class="form-control" rows="2" id="notesRemarks" name="remarks" maxlength="255" th:text="${notesForm.remarks}"></textarea>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="notesRefund">Expected refund amount (&#8377;)</label>
+                <input type="number" class="form-control" id="notesRefund" name="refundAmount" min="0" step="0.01" th:value="${notesForm.refundAmount}">
+              </div>
+            </div>
+            <div th:if="${currentUser.warehouse}" class="mb-3">
+              <label class="form-label fw-semibold" for="notesInspection">Inspection remarks</label>
+              <textarea class="form-control" rows="3" id="notesInspection" name="inspectionRemarks" maxlength="255" th:text="${notesForm.inspectionRemarks}"></textarea>
+            </div>
+            <button type="submit" class="btn btn-outline-primary" id="saveNotesBtn"><i class="bi bi-save me-1"></i>Save notes</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: actions and timeline -->
+    <div class="col-lg-5">
+      <div class="card mb-4" th:if="${!actions.empty}" id="actionsCard">
+        <div class="card-header"><i class="bi bi-lightning-charge me-1"></i>Actions for you</div>
+        <div class="card-body">
+          <div class="action-box" th:each="a : ${actions}">
+            <form th:action="@{/returns/{id}/status(id=${r.id})}" method="post"
+                  th:attr="data-confirm=(${a.destructive} ? 'Are you sure? This cannot be undone.' : null)">
+              <input type="hidden" name="action" th:value="${a.param}">
+              <div class="fw-semibold mb-2"><i class="bi me-1" th:classappend="${a.icon}"></i><span th:text="${a.label}">Action</span></div>
+
+              <div class="mb-2" th:if="${a.needsPickupDate}">
+                <label class="form-label small fw-semibold mb-1" for="pickupDateInput">Pickup date</label>
+                <input type="date" class="form-control" name="pickupDate" id="pickupDateInput" required>
+              </div>
+              <div class="mb-2" th:if="${a.needsRefundAmount}">
+                <label class="form-label small fw-semibold mb-1" for="refundAmountInput">Refund amount (&#8377;)</label>
+                <input type="number" class="form-control" name="refundAmount" id="refundAmountInput" min="0.01" step="0.01"
+                       th:value="${r.refundAmount}" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-semibold mb-1" th:for="'remarks-' + ${a.param}" th:text="${a.remarksLabel}">Note</label>
+                <textarea class="form-control" rows="2" name="remarks" maxlength="255" th:id="'remarks-' + ${a.param}"
+                          th:required="${a.needsRemarks}"></textarea>
+              </div>
+              <button type="submit" class="btn w-100" th:id="'btn-' + ${a.param}" th:classappend="'btn-' + ${a.style}">
+                <i class="bi me-1" th:classappend="${a.icon}"></i><span th:text="${a.label}">Action</span></button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-light border" th:if="${actions.empty and !r.status.closed}" id="noActions">
+        <i class="bi bi-hourglass-split me-1"></i>No action is needed from you right now. The next step is handled by another team.
+      </div>
+
+      <div class="card">
+        <div class="card-header"><i class="bi bi-clock-history me-1"></i>History</div>
+        <div class="card-body">
+          <ul class="timeline" id="historyList">
+            <li th:each="h : ${history}">
+              <div class="t-title" th:text="${h.fromStatus == null ? 'Request created' : (h.fromStatus == h.toStatus ? 'Details updated' : h.toStatus.label)}">Status</div>
+              <div class="t-meta"><span th:text="${h.changedBy}">user</span> (<span th:text="${h.actorRole != null ? h.actorRole.label : ''}">Role</span>)
+                &middot; <span th:text="${#temporals.format(h.changedAt, 'dd MMM yyyy, HH:mm')}">Date</span></div>
+              <div class="t-note" th:if="${h.note != null}" th:text="${h.note}">Note</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -1,42 +1,131 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Returns')}"></head>
-<body class="bg-light">
+<body>
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">Return requests</h1>
-    <a class="btn btn-primary" th:href="@{/returns/new}">New return</a>
+<main class="container py-4">
+  <div th:replace="~{fragments/layout :: flash}"></div>
+
+  <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h1 class="h3 mb-1" th:text="${currentUser.customer} ? 'My return requests' : 'Return requests'">Return requests</h1>
+      <p class="text-muted mb-0"
+         th:text="${currentUser.customer} ? 'Track every return you have raised.' : 'Review, process and track all customer returns.'">Subtitle</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary" id="exportBtn" th:if="${!currentUser.customer}"
+         th:href="@{/returns/export(q=${q},status=${status},category=${category})}">
+        <i class="bi bi-download me-1"></i>Export CSV</a>
+      <a class="btn btn-primary" id="newReturnBtn" th:if="${currentUser.customer}" th:href="@{/returns/new}">
+        <i class="bi bi-plus-lg me-1"></i>New return</a>
+    </div>
   </div>
 
-  <div class="alert alert-success" id="flashMessage" th:if="${message}" th:text="${message}">Saved</div>
+  <!-- Status tabs -->
+  <div class="status-tabs mb-3">
+    <a class="status-tab" th:classappend="${status == ''} ? 'active'" th:href="@{/returns(q=${q},category=${category})}">All</a>
+    <a class="status-tab" th:each="s : ${statuses}" th:classappend="${status == s.name()} ? 'active'"
+       th:href="@{/returns(q=${q},status=${s.name()},category=${category})}" th:text="${s.label}">Requested</a>
+  </div>
 
-  <div class="card shadow-sm">
+  <!-- Search and filters -->
+  <div class="card mb-3">
+    <div class="card-body">
+      <form th:action="@{/returns}" method="get" class="row g-2 align-items-end" id="searchForm">
+        <div class="col-md-5">
+          <label class="form-label small fw-semibold mb-1" for="q">Search</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" id="q" name="q" th:value="${q}"
+                   placeholder="Order number, customer or product">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold mb-1" for="statusFilter">Status</label>
+          <select class="form-select" id="statusFilter" name="status">
+            <option value="">All statuses</option>
+            <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.label}"
+                    th:selected="${s.name() == status}">Requested</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small fw-semibold mb-1" for="categoryFilter">Reason</label>
+          <select class="form-select" id="categoryFilter" name="category">
+            <option value="">All reasons</option>
+            <option th:each="c : ${categories}" th:value="${c.name()}" th:text="${c.label}"
+                    th:selected="${c.name() == category}">Defective</option>
+          </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+          <button type="submit" class="btn btn-primary flex-fill" id="searchBtn" data-keep-enabled="true">Search</button>
+          <a class="btn btn-outline-secondary" id="resetBtn" th:href="@{/returns}" title="Clear filters"><i class="bi bi-x-lg"></i></a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="card">
     <div class="table-responsive">
       <table class="table table-hover mb-0" id="returnsTable">
-        <thead class="table-light">
+        <thead>
           <tr>
-            <th>ID</th><th>Order no.</th><th>Customer</th><th>Product</th>
-            <th>Qty</th><th>Status</th><th>Created</th>
+            <th>Return</th>
+            <th>Product</th>
+            <th th:if="${!currentUser.customer}">Customer</th>
+            <th>Reason</th>
+            <th class="text-center">Qty</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr th:each="r : ${returns}">
-            <td th:text="${r.id}">1</td>
-            <td th:text="${r.orderNumber}">ORD-1001</td>
-            <td th:text="${r.customerName}">Name</td>
-            <td th:text="${r.productName}">Product</td>
-            <td th:text="${r.quantity}">1</td>
-            <td><span class="badge text-bg-secondary" th:text="${r.status}">REQUESTED</span></td>
-            <td th:text="${#temporals.format(r.createdAt, 'dd MMM yyyy HH:mm')}">date</td>
+          <tr th:each="r : ${results.content}">
+            <td><a class="return-code" th:href="@{/returns/{id}(id=${r.id})}" th:text="${r.returnCode}">RR-00001</a></td>
+            <td>
+              <div class="fw-semibold" th:text="${r.productName}">Product</div>
+              <div class="sub-text" th:text="${r.orderNumber}">ORD-1001</div>
+            </td>
+            <td th:if="${!currentUser.customer}" th:text="${r.customerName}">Customer</td>
+            <td th:text="${r.category != null ? r.category.label : '-'}">Reason</td>
+            <td class="text-center" th:text="${r.quantity}">1</td>
+            <td><span th:replace="~{fragments/layout :: statusBadge(${r.status})}"></span></td>
+            <td><span th:text="${#temporals.format(r.createdAt, 'dd MMM yyyy')}">01 Jan 2026</span></td>
+            <td class="text-end"><a class="btn btn-sm btn-outline-primary" th:href="@{/returns/{id}(id=${r.id})}">View</a></td>
           </tr>
-          <tr th:if="${#lists.isEmpty(returns)}">
-            <td colspan="7" class="text-center text-muted py-4">No return requests yet.</td>
+          <tr th:if="${results.empty}">
+            <td colspan="8">
+              <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <div class="fw-semibold mt-2">No return requests found</div>
+                <div class="small">Try a different search or clear the filters.</div>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
+
+    <div class="card-footer bg-white d-flex flex-wrap justify-content-between align-items-center gap-2" th:if="${!results.empty}">
+      <div class="small text-muted" id="resultSummary">
+        Showing <b th:text="${results.number * results.size + 1}">1</b> to
+        <b th:text="${results.number * results.size + results.numberOfElements}">8</b> of
+        <b th:text="${results.totalElements}">24</b> requests</div>
+      <nav th:if="${results.totalPages > 1}" aria-label="Pages">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item" th:classappend="${results.first} ? 'disabled'">
+            <a class="page-link" th:href="@{/returns(page=${results.number - 1},q=${q},status=${status},category=${category})}">&laquo;</a></li>
+          <li class="page-item" th:each="p : ${#numbers.sequence(0, results.totalPages - 1)}" th:classappend="${p == results.number} ? 'active'">
+            <a class="page-link" th:href="@{/returns(page=${p},q=${q},status=${status},category=${category})}" th:text="${p + 1}">1</a></li>
+          <li class="page-item" th:classappend="${results.last} ? 'disabled'">
+            <a class="page-link" th:href="@{/returns(page=${results.number + 1},q=${q},status=${status},category=${category})}">&raquo;</a></li>
+        </ul>
+      </nav>
+    </div>
   </div>
-</div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 </body>
 </html>

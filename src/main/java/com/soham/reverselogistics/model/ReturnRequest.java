@@ -1,6 +1,15 @@
 package com.soham.reverselogistics.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,14 +34,23 @@ public class ReturnRequest {
     @Column(nullable = false)
     private Integer quantity;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private ReturnCategory category;
+
     @Column(nullable = false, length = 255)
     private String reason;
+
+    @Column(length = 255)
+    private String pickupAddress;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ReturnStatus status = ReturnStatus.REQUESTED;
 
+    @Column(precision = 12, scale = 2)
     private BigDecimal refundAmount;
+
     private LocalDate pickupDate;
 
     @Column(length = 255)
@@ -47,9 +65,30 @@ public class ReturnRequest {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    private LocalDateTime updatedAt;
+
     @PrePersist
     void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        if (updatedAt == null) {
+            updatedAt = createdAt;
+        }
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    /** Friendly reference shown to users, for example RR-00012. */
+    public String getReturnCode() {
+        if (id == null) {
+            return "New";
+        }
+        return "RR-" + String.format("%05d", id);
     }
 
     public Long getId() { return id; }
@@ -61,8 +100,12 @@ public class ReturnRequest {
     public void setProductName(String productName) { this.productName = productName; }
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
+    public ReturnCategory getCategory() { return category; }
+    public void setCategory(ReturnCategory category) { this.category = category; }
     public String getReason() { return reason; }
     public void setReason(String reason) { this.reason = reason; }
+    public String getPickupAddress() { return pickupAddress; }
+    public void setPickupAddress(String pickupAddress) { this.pickupAddress = pickupAddress; }
     public ReturnStatus getStatus() { return status; }
     public void setStatus(ReturnStatus status) { this.status = status; }
     public BigDecimal getRefundAmount() { return refundAmount; }
@@ -76,4 +119,7 @@ public class ReturnRequest {
     public String getCreatedBy() { return createdBy; }
     public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

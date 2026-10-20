@@ -1,19 +1,135 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8">
-  <title>Reverse Logistics Portal</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-  <div class="container py-5">
-    <div class="card shadow-sm">
-      <div class="card-body text-center p-5">
-        <h1 class="h3" th:text="${appName}">App name</h1>
-        <p class="text-muted">Local setup is working.</p>
-        <a class="btn btn-primary" href="/actuator/health">Check health</a>
+<head th:replace="~{fragments/layout :: head('Reverse Logistics Management')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6">
+        <span class="hero-badge"><i class="bi bi-stars me-1"></i>Automated Reverse Logistics</span>
+        <h1 class="hero-title mt-3">Returns, handled <span class="text-gradient">end to end.</span></h1>
+        <p class="hero-text">ReturnHub takes a product return from the customer's first request, through
+          approval, pickup, warehouse inspection and the final refund, restock or disposal, with complete
+          visibility for every team.</p>
+        <div class="d-flex flex-wrap gap-2 mt-4">
+          <a class="btn btn-warning btn-lg fw-semibold px-4" id="heroSignIn" th:href="@{/login}"
+             th:text="${currentUser == null} ? 'Sign in to the portal' : 'Open the portal'">Sign in</a>
+          <a class="btn btn-outline-light btn-lg px-4" href="#how-it-works">How it works</a>
+        </div>
+        <div class="hero-points mt-4">
+          <span><i class="bi bi-check2-circle me-1"></i>Role-based workspaces</span>
+          <span><i class="bi bi-check2-circle me-1"></i>Live dashboard</span>
+          <span><i class="bi bi-check2-circle me-1"></i>Full audit trail</span>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="hero-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <div class="small text-muted">Return</div>
+              <div class="fw-bold fs-5">RR-00018</div>
+            </div>
+            <span class="status-badge status-PICKUP_SCHEDULED">Pickup scheduled</span>
+          </div>
+          <div class="fw-semibold">Bluetooth Headphones</div>
+          <div class="small text-muted mb-3">Order ORD-24203 &middot; Defective or not working</div>
+          <ul class="mini-timeline">
+            <li class="done"><i class="bi bi-check-circle-fill"></i><div><b>Requested</b><span>Customer raised the return</span></div></li>
+            <li class="done"><i class="bi bi-check-circle-fill"></i><div><b>Approved</b><span>Approved by the return manager</span></div></li>
+            <li class="current"><i class="bi bi-truck"></i><div><b>Pickup scheduled</b><span>Courier collects the item</span></div></li>
+            <li><i class="bi bi-circle"></i><div><b>Received and inspected</b><span>Warehouse checks the condition</span></div></li>
+            <li><i class="bi bi-circle"></i><div><b>Resolved</b><span>Refund, restock or dispose</span></div></li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
+</section>
+
+<!-- STATS STRIP -->
+<section class="stats-strip">
+  <div class="container">
+    <div class="row text-center g-3">
+      <div class="col-6 col-md-3"><div class="stat-big">9</div><div class="stat-cap">tracked statuses</div></div>
+      <div class="col-6 col-md-3"><div class="stat-big">3</div><div class="stat-cap">role-based workspaces</div></div>
+      <div class="col-6 col-md-3"><div class="stat-big">100%</div><div class="stat-cap">changes recorded in history</div></div>
+      <div class="col-6 col-md-3"><div class="stat-big">1 click</div><div class="stat-cap">CSV export for reports</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="py-5" id="how-it-works">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="section-title">How it works</h2>
+      <p class="text-muted">Four simple stages from request to resolution.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-3"><div class="step-card"><div class="step-no">1</div><i class="bi bi-pencil-square step-icon"></i>
+        <h3>Request</h3><p>The customer raises a return with the order, product, reason and pickup address.</p></div></div>
+      <div class="col-md-6 col-lg-3"><div class="step-card"><div class="step-no">2</div><i class="bi bi-calendar-check step-icon"></i>
+        <h3>Approve and schedule</h3><p>The return manager approves the request and schedules the courier pickup.</p></div></div>
+      <div class="col-md-6 col-lg-3"><div class="step-card"><div class="step-no">3</div><i class="bi bi-box-seam step-icon"></i>
+        <h3>Receive and inspect</h3><p>Warehouse staff receive the item and record its condition.</p></div></div>
+      <div class="col-md-6 col-lg-3"><div class="step-card"><div class="step-no">4</div><i class="bi bi-check2-all step-icon"></i>
+        <h3>Resolve</h3><p>The item is refunded, returned to stock or disposed of, and the customer is updated.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="py-5 bg-white border-top border-bottom">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="section-title">Everything a returns team needs</h2>
+      <p class="text-muted">Built around the real reverse logistics workflow.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4"><div class="feature"><i class="bi bi-people"></i><h3>Role-based workspaces</h3>
+        <p>Customers, managers and warehouse staff each see only what they need.</p></div></div>
+      <div class="col-md-6 col-lg-4"><div class="feature"><i class="bi bi-search"></i><h3>Search and filters</h3>
+        <p>Find any return by order number, customer or product, and filter by status or reason.</p></div></div>
+      <div class="col-md-6 col-lg-4"><div class="feature"><i class="bi bi-bar-chart-line"></i><h3>Live dashboard</h3>
+        <p>Counts, charts and work queues show what needs attention right now.</p></div></div>
+      <div class="col-md-6 col-lg-4"><div class="feature"><i class="bi bi-clock-history"></i><h3>Complete audit trail</h3>
+        <p>Every status change is recorded with who made it and when.</p></div></div>
+      <div class="col-md-6 col-lg-4"><div class="feature"><i class="bi bi-printer"></i><h3>Printable return labels</h3>
+        <p>Approved returns get a label with a QR code for the courier and the warehouse.</p></div></div>
+      <div class="col-md-6 col-lg-4"><div class="feature"><i class="bi bi-shield-lock"></i><h3>Secure by design</h3>
+        <p>Hashed passwords, CSRF protection and server-side role checks on every action.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ROLES -->
+<section class="py-5">
+  <div class="container">
+    <div class="text-center mb-5"><h2 class="section-title">One portal, three workspaces</h2></div>
+    <div class="row g-4">
+      <div class="col-md-4"><div class="role-card"><span class="role-icon bg-primary-subtle text-primary"><i class="bi bi-person"></i></span>
+        <h3>Customer</h3><ul><li>Raise return requests</li><li>Track every step on a timeline</li><li>Edit a request before approval</li></ul></div></div>
+      <div class="col-md-4"><div class="role-card"><span class="role-icon bg-warning-subtle text-warning-emphasis"><i class="bi bi-clipboard-check"></i></span>
+        <h3>Return Manager</h3><ul><li>Approve or reject requests</li><li>Schedule pickups</li><li>Issue refunds and export reports</li></ul></div></div>
+      <div class="col-md-4"><div class="role-card"><span class="role-icon bg-success-subtle text-success"><i class="bi bi-building"></i></span>
+        <h3>Warehouse Staff</h3><ul><li>Receive and inspect items</li><li>Restock or dispose of items</li><li>Watch expected arrivals</li></ul></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="container text-center">
+    <h2 class="mb-2">Ready to see it in action?</h2>
+    <p class="mb-4">Sign in with a demo account and explore all three workspaces.</p>
+    <a class="btn btn-warning btn-lg fw-semibold px-5" th:href="@{/login}">Sign in</a>
+  </div>
+</section>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 </body>
 </html>

@@ -3,7 +3,7 @@
 **Project:** Automated Reverse Logistics Management Portal  
 **Student:** Soham Kholapure (Roll No. 23102A0064, BE CMPN A)  
 **Methodology:** Agile Scrum (3 Sprints, 15 Tasks)  
-**Last Updated:** Sprint 2 (Task 6 MVP Completion)
+**Last Updated:** Sprint 2 (Task 7 Jenkins CI Job Completion)
 
 ---
 
@@ -17,9 +17,9 @@
 | | **TASK-04** | Git & GitHub Repository Initialization | SCM | **DONE** | GitHub Repo, README, Templates, Policies |
 | | **TASK-05** | Feature Development with Branching | Feature | **DONE** | Feature branch 1, PR, Merge into `develop` |
 | **Sprint 2** | **TASK-06** | MVP Completion & Git Collaboration | Integration | **DONE** | Functional MVP, Conflict Resolution, Tagging |
-| | **TASK-07** | Unit Testing and Test Automation | Quality | Backlog | JUnit test suite & coverage report |
-| | **TASK-08** | Static Code Analysis & Linting | Quality | Backlog | Checkstyle / SpotBugs / SonarQube setup |
-| | **TASK-09** | Continuous Integration with Jenkins | CI/CD | Backlog | Jenkinsfile, Automated build pipeline |
+| | **TASK-07** | Jenkins Installation & Continuous Integration Job | CI/CD | **DONE** | Configured Jenkins Job, Build Log, Polling Trigger, Archived WAR |
+| | **TASK-08** | Unit Testing & Automated Test Execution in CI | Quality | Backlog | JUnit test suite & automated test execution |
+| | **TASK-09** | Static Code Analysis & Linting | Quality | Backlog | Checkstyle / SpotBugs / SonarQube setup |
 | | **TASK-10** | Automated Test Integration in CI | CI/CD | Backlog | Automated test stage in Jenkins |
 | **Sprint 3** | **TASK-11** | Containerization with Docker | Containers | Backlog | Dockerfile, Containerized app & test |
 | | **TASK-12** | Multi-Container Orchestration (Docker Compose) | Ops | Backlog | docker-compose.yml, App + DB service |
@@ -55,9 +55,9 @@
 
 ---
 
-### Sprint 2: MVP Completion & Git Collaboration (Task 6) — COMPLETED
+### Sprint 2: MVP Completion, Git Collaboration & CI Pipeline
 
-#### TASK-06: MVP Completion and Git Collaboration
+#### TASK-06: MVP Completion and Git Collaboration — COMPLETED
 * **User Story:** As an operations manager and customer, I want a fully functioning Reverse Logistics MVP with complete CRUD, role-based workflows, search filters, and an operational summary dashboard, developed using DevOps Git collaboration practices.
 * **Scope & Completed Capabilities:**
   1. **Create Record:** Customer creates returns with order number, product, quantity, category, reason, pickup address (`/returns/new`).
@@ -90,14 +90,41 @@
   - [x] Tagged release version created (`v1.0.0-mvp`).
   - [x] Product backlog updated.
 
+#### TASK-07: Jenkins Installation and Continuous Integration Job — COMPLETED
+* **User Story:** As a DevOps engineer, I want an automated Continuous Integration build job in Jenkins triggered by SCM polling or commit so that every change committed to the GitHub repository is automatically checked out, compiled, tested, packaged into an executable WAR, and archived as a release artifact.
+* **Scope & Completed Capabilities:**
+  1. **Jenkins Installation & Environment Configuration:**
+     - Jenkins LTS (v2.580.1) installed and operational on designated CI port `http://localhost:8080/`.
+     - Configured with `JENKINS_HOME=C:\jenkins\home`.
+     - Essential CI plugins installed: `git`, `git-client`, `credentials`, `scm-api`, `timestamper`, `ws-cleanup`.
+     - Security realm and admin access configured.
+  2. **GitHub SCM Integration:**
+     - Connected remote repository: `https://github.com/soham-Jain08/reverse-logistics-portal.git`.
+     - Monitored release branch: `*/main`.
+  3. **Scheduled Polling / Commit Trigger:**
+     - Scheduled cron trigger configured: `H/5 * * * *` (polling GitHub every 5 minutes for new commits).
+     - Automated change detection and SCM polling log verified.
+  4. **Automated Build & Test Execution:**
+     - Automated batch execution: `call mvnw.cmd clean package -DskipTests=false`.
+     - Executes full Spring Boot lifecycle: resource filtering, compilation, unit/integration testing (100% pass), and WAR packaging.
+  5. **Artifact Archiving:**
+     - Build artifact pattern: `target/*.war`.
+     - Successfully archived: `reverse-logistics-portal-0.0.1-SNAPSHOT.war` (61.79 MB).
+* **Definition of Done (DoD) Checklist:**
+  - [x] Jenkins server running on port `8080` with zero conflicts against dev server (`8081`).
+  - [x] Jenkins job `reverse-logistics-portal-ci` created and connected to GitHub.
+  - [x] Build trigger (SCM Polling `H/5 * * * *`) active with verified polling log.
+  - [x] Clean build execution with all tests passing (`BUILD SUCCESS`).
+  - [x] Build artifact `reverse-logistics-portal-0.0.1-SNAPSHOT.war` archived and downloadable.
+  - [x] Comprehensive evidence documented in `docs/TASK7-DELIVERY.md`.
+
 ---
 
-## 3. Upcoming Sprint Backlog (Tasks 7 to 15)
+## 3. Upcoming Sprint Backlog (Tasks 8 to 15)
 
-* **TASK-07 (Sprint 2):** Unit Testing and Test Automation (JUnit 5 + Mockito).
-* **TASK-08 (Sprint 2):** Static Code Analysis & Linting (Checkstyle / SpotBugs / SonarQube).
-* **TASK-09 (Sprint 2):** Jenkins CI Pipeline setup with declarative `Jenkinsfile`.
-* **TASK-10 (Sprint 2):** Automated test reporting in Jenkins.
+* **TASK-08 (Sprint 2):** Unit Testing & Automated Test Execution in CI (JUnit 5 + Mockito).
+* **TASK-09 (Sprint 2):** Static Code Analysis & Linting (Checkstyle / SpotBugs / SonarQube).
+* **TASK-10 (Sprint 2):** Automated Test Integration in CI Pipeline.
 * **TASK-11 (Sprint 3):** Docker containerization (multi-stage build, minimal Alpine/Eclipse-Temurin JRE).
 * **TASK-12 (Sprint 3):** Docker Compose multi-service deployment.
 * **TASK-13 (Sprint 3):** Ansible playbook for automated provisioning and deployment.

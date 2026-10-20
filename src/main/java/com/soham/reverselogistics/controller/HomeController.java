@@ -1,15 +1,14 @@
-package com.soham.reverselogistics;
+package com.soham.reverselogistics.controller;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+/** Public landing page. */
 @Controller
 public class HomeController {
 
     @GetMapping("/")
-    public String home(Model model) {
-        model.addAttribute("appName", "Automated Reverse Logistics Management Portal");
+    public String home() {
         return "index";
     }
 }

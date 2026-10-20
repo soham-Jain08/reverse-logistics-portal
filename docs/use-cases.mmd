@@ -1,0 +1,9 @@
+flowchart LR
+    Customer([Customer]) --> Create[Create return request]
+    Customer --> ViewOwn[View own return requests]
+    Manager([Return Manager]) --> Review[Approve or reject]
+    Manager --> Pickup[Schedule pickup]
+    Manager --> Refund[Record refund]
+    Warehouse([Warehouse Staff]) --> Receive[Mark received]
+    Warehouse --> Inspect[Record inspection]
+    Warehouse --> Outcome[Restock or dispose]

@@ -1,0 +1,7 @@
+flowchart TD
+    U[Customer / Return Manager / Warehouse Staff] --> W[Web browser or REST client]
+    W --> C[Spring Boot REST Controller]
+    C --> V[Validation]
+    V --> R[Spring Data JPA Repository]
+    R --> DB[(H2 database)]
+    A[Spring Boot Actuator] --> H[/actuator/health]

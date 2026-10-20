@@ -19,7 +19,7 @@
 | **Sprint 2** | **TASK-06** | MVP Completion & Git Collaboration | Integration | **DONE** | Functional MVP, Conflict Resolution, Tagging |
 | | **TASK-07** | Jenkins Installation & Continuous Integration Job | CI/CD | **DONE** | Configured Jenkins Job, Build Log, Polling Trigger, Archived WAR |
 | | **TASK-08** | Pipeline as Code & Server Deployment | CI/CD | **DONE** | Jenkinsfile, Pipeline Run Log, Tomcat Deployment on Port 8082 |
-| | **TASK-09** | Static Code Analysis & Linting | Quality | Backlog | Checkstyle / SpotBugs / SonarQube setup |
+| | **TASK-09** | Selenium Test Design and Local Execution | Testing | **DONE** | Test Plan, Selenium Scripts, Local Test Report, Failure Screenshot Mechanism |
 | | **TASK-10** | Automated Test Integration in CI | CI/CD | Backlog | Automated test stage in Jenkins |
 | **Sprint 3** | **TASK-11** | Containerization with Docker | Containers | Backlog | Dockerfile, Containerized app & test |
 | | **TASK-12** | Multi-Container Orchestration (Docker Compose) | Ops | Backlog | docker-compose.yml, App + DB service |
@@ -144,14 +144,37 @@
   - [x] Post-deployment automated health check returns HTTP 200.
   - [x] Comprehensive evidence documented in `docs/TASK8-DELIVERY.md`.
 
+#### TASK-09: Selenium Test Design and Local Execution — COMPLETED
+* **User Story:** As a QA / DevOps engineer, I want an automated browser testing framework using Selenium WebDriver and JUnit 5 to identify and automate 5 critical user journeys, assert UI elements and business flows, capture full-page screenshots upon any failure, and execute cleanly within the local Maven lifecycle.
+* **Scope & Completed Capabilities:**
+  1. **Test Plan Design:** Complete test strategy identifying 5 critical user journeys across Customer, Manager, and Warehouse personas documented in `docs/TASK9-TEST-PLAN.md`.
+  2. **Selenium WebDriver Automation Suite (`src/test/java/com/soham/reverselogistics/selenium/`):**
+     - `CustomerReturnRequestJourneyTest.java` (Journey 1): Return request creation, dynamic input entry, and detail view verification.
+     - `ManagerWorkflowJourneyTest.java` (Journey 2): Manager reviews return records, validates status badges, and inspects the 6-step progress stepper.
+     - `ReturnsSearchAndFilterJourneyTest.java` (Journey 3): Keyword search (`q=ORD`), status filtering (`REQUESTED`), and CSV export link verification.
+     - `DashboardNavigationJourneyTest.java` (Journey 4): Executive dashboard KPI cards verification and action queue navigation.
+     - `SecurityAndValidationJourneyTest.java` (Journey 5A, 5B, 5C): Unauthenticated access redirect, invalid credentials alert banner, and form validation blocking empty submissions.
+  3. **Failure Screenshot Mechanism:**
+     - Implemented `ScreenshotExtension.java` (JUnit 5 `AfterTestExecutionCallback`) capturing full-page PNGs to `target/screenshots/FAILURE_*.png` on any assertion error or timeout.
+     - Captured milestone journey evidence to `target/screenshots/JOURNEY_*.png`.
+  4. **Local Execution & Reporting:**
+     - Executed via `./mvnw.cmd test` — 9/9 tests passed with 0 failures and 0 errors (`BUILD SUCCESS`).
+     - Surefire test reports generated in `target/surefire-reports/`.
+* **Definition of Done (DoD) Checklist:**
+  - [x] Test plan created with 5 critical user journeys (`docs/TASK9-TEST-PLAN.md`).
+  - [x] Selenium WebDriver scripts implemented with assertions and test data.
+  - [x] Failure screenshot mechanism implemented and verified (`target/screenshots/`).
+  - [x] Local test suite executed through Maven with 100% pass rate.
+  - [x] Local test delivery report documented (`docs/TASK9-DELIVERY.md`).
+  - [x] Product backlog updated.
+
 ---
 
-## 3. Upcoming Sprint Backlog (Tasks 9 to 15)
+## 3. Upcoming Sprint Backlog (Tasks 10 to 15)
 
-* **TASK-09 (Sprint 2):** Static Code Analysis & Linting (Checkstyle / SpotBugs / SonarQube).
 * **TASK-10 (Sprint 2):** Automated Test Integration in CI Pipeline.
 * **TASK-11 (Sprint 3):** Docker containerization (multi-stage build, minimal Alpine/Eclipse-Temurin JRE).
 * **TASK-12 (Sprint 3):** Docker Compose multi-service deployment.
 * **TASK-13 (Sprint 3):** Ansible playbook for automated provisioning and deployment.
-* **TASK-14 (Sprint 3):** Selenium automated browser testing.
+* **TASK-14 (Sprint 3):** Performance and Load Testing.
 * **TASK-15 (Sprint 3):** CD Pipeline & Production Monitoring (`/actuator/health`, metrics, live demo).

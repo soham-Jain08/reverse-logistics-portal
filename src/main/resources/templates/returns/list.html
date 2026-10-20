@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Returns')}"></head>
+<body class="bg-light">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Return requests</h1>
+    <a class="btn btn-primary" th:href="@{/returns/new}">New return</a>
+  </div>
+
+  <div class="alert alert-success" id="flashMessage" th:if="${message}" th:text="${message}">Saved</div>
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0" id="returnsTable">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th><th>Order no.</th><th>Customer</th><th>Product</th>
+            <th>Qty</th><th>Status</th><th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="r : ${returns}">
+            <td th:text="${r.id}">1</td>
+            <td th:text="${r.orderNumber}">ORD-1001</td>
+            <td th:text="${r.customerName}">Name</td>
+            <td th:text="${r.productName}">Product</td>
+            <td th:text="${r.quantity}">1</td>
+            <td><span class="badge text-bg-secondary" th:text="${r.status}">REQUESTED</span></td>
+            <td th:text="${#temporals.format(r.createdAt, 'dd MMM yyyy HH:mm')}">date</td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(returns)}">
+            <td colspan="7" class="text-center text-muted py-4">No return requests yet.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</body>
+</html>

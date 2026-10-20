@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('New return')}"></head>
+<body class="bg-light">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div class="container py-4" style="max-width: 720px;">
+  <h1 class="h4 mb-3">New return request</h1>
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form th:action="@{/returns}" th:object="${form}" method="post" novalidate>
+
+        <div class="mb-3">
+          <label class="form-label" for="orderNumber">Order number</label>
+          <input type="text" class="form-control" th:field="*{orderNumber}"
+               maxlength="30"
+                 th:classappend="${#fields.hasErrors('orderNumber')} ? 'is-invalid'">
+          <div class="invalid-feedback" th:if="${#fields.hasErrors('orderNumber')}" th:errors="*{orderNumber}">Error</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="customerName">Customer name</label>
+          <input type="text" class="form-control" th:field="*{customerName}"
+               maxlength="80"
+                 th:classappend="${#fields.hasErrors('customerName')} ? 'is-invalid'">
+          <div class="invalid-feedback" th:if="${#fields.hasErrors('customerName')}" th:errors="*{customerName}">Error</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="productName">Product name</label>
+          <input type="text" class="form-control" th:field="*{productName}"
+               maxlength="100"
+                 th:classappend="${#fields.hasErrors('productName')} ? 'is-invalid'">
+          <div class="invalid-feedback" th:if="${#fields.hasErrors('productName')}" th:errors="*{productName}">Error</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="quantity">Quantity</label>
+          <input type="number" class="form-control" th:field="*{quantity}"
+                 th:classappend="${#fields.hasErrors('quantity')} ? 'is-invalid'">
+          <div class="invalid-feedback" th:if="${#fields.hasErrors('quantity')}" th:errors="*{quantity}">Error</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="reason">Reason for return</label>
+          <textarea class="form-control" rows="3" th:field="*{reason}"
+                    maxlength="255"
+                    th:classappend="${#fields.hasErrors('reason')} ? 'is-invalid'"></textarea>
+          <div class="invalid-feedback" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}">Error</div>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn btn-primary">Submit return request</button>
+        <a class="btn btn-outline-secondary" th:href="@{/returns}">Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+</body>
+</html>

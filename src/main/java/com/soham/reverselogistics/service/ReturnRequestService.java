@@ -48,15 +48,15 @@ public class ReturnRequestService {
     @Transactional(readOnly = true)
     public Page<ReturnRequest> search(CurrentUser user, String q, String status, String category, int page) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return repository.search(scope(user), clean(q), enumName(status, ReturnStatus.class),
-                enumName(category, ReturnCategory.class), pageable);
+        return repository.search(scope(user), parseEnum(status, ReturnStatus.class),
+                parseEnum(category, ReturnCategory.class), clean(q), pageable);
     }
 
     @Transactional(readOnly = true)
     public List<ReturnRequest> searchAll(CurrentUser user, String q, String status, String category) {
         Pageable pageable = PageRequest.of(0, 5000, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return repository.search(scope(user), clean(q), enumName(status, ReturnStatus.class),
-                enumName(category, ReturnCategory.class), pageable).getContent();
+        return repository.search(scope(user), parseEnum(status, ReturnStatus.class),
+                parseEnum(category, ReturnCategory.class), clean(q), pageable).getContent();
     }
 
     @Transactional(readOnly = true)
@@ -301,14 +301,14 @@ public class ReturnRequestService {
         return value.trim();
     }
 
-    private static <E extends Enum<E>> String enumName(String value, Class<E> type) {
+    private static <E extends Enum<E>> E parseEnum(String value, Class<E> type) {
         if (value == null || value.trim().isEmpty()) {
-            return "";
+            return null;
         }
         try {
-            return Enum.valueOf(type, value.trim().toUpperCase()).name();
+            return Enum.valueOf(type, value.trim().toUpperCase());
         } catch (IllegalArgumentException ex) {
-            return "";
+            return null;
         }
     }
 }

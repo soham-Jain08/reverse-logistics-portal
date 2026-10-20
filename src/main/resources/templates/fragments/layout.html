@@ -1,20 +1,120 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
+<!-- ========== HEAD ========== -->
 <head th:fragment="head(title)">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title th:text="${title} + ' | Reverse Logistics Portal'">Portal</title>
+  <title th:text="${title} + ' | ReturnHub'">ReturnHub</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%A6%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
+
 <body>
-  <nav th:fragment="navbar" class="navbar navbar-expand navbar-dark bg-dark">
-    <div class="container">
-      <a class="navbar-brand" th:href="@{/}">Reverse Logistics Portal</a>
-      <ul class="navbar-nav">
-        <li class="nav-item"><a class="nav-link" th:href="@{/returns}">Returns</a></li>
-        <li class="nav-item"><a class="nav-link" th:href="@{/returns/new}">New return</a></li>
+
+<!-- ========== NAVBAR ========== -->
+<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
+  <div class="container">
+    <a class="navbar-brand brand" th:href="@{/}">
+      <span class="brand-icon"><i class="bi bi-box-seam"></i></span>ReturnHub
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+            aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="mainNav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link" th:classappend="${activePath == '/'} ? 'active'" th:href="@{/}">
+            <i class="bi bi-house-door me-1"></i>Home</a>
+        </li>
+        <li class="nav-item" th:if="${currentUser != null}">
+          <a class="nav-link" id="navDashboard"
+             th:classappend="${activePath == '/dashboard'} ? 'active'"
+             th:href="@{/dashboard}">
+            <i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
+        </li>
+        <li class="nav-item" th:if="${currentUser != null}">
+          <a class="nav-link" id="navReturns"
+             th:classappend="${#strings.startsWith(activePath, '/returns') and activePath != '/returns/new'} ? 'active'"
+             th:href="@{/returns}">
+            <i class="bi bi-list-check me-1"></i>
+            <span th:text="${currentUser.customer} ? 'My returns' : 'All returns'">Returns</span></a>
+        </li>
+        <li class="nav-item" th:if="${currentUser != null and currentUser.customer}">
+          <a class="nav-link" id="navNewReturn" th:classappend="${activePath == '/returns/new'} ? 'active'" th:href="@{/returns/new}">
+            <i class="bi bi-plus-circle me-1"></i>New return</a>
+        </li>
+      </ul>
+      <ul class="navbar-nav align-items-lg-center">
+        <li class="nav-item" th:if="${currentUser == null}">
+          <a class="btn btn-light btn-sm px-3 fw-semibold" id="navSignIn" th:href="@{/login}">
+            <i class="bi bi-box-arrow-in-right me-1"></i>Sign in</a>
+        </li>
+        <li class="nav-item dropdown" th:if="${currentUser != null}">
+          <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" id="userMenu" role="button"
+             data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="avatar" th:text="${currentUser.initials}">AM</span>
+            <span class="d-none d-lg-inline" th:text="${currentUser.displayName}">Name</span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+            <li class="px-3 py-2">
+              <div class="fw-semibold" th:text="${currentUser.displayName}">Name</div>
+              <span class="role-pill" th:text="${currentUser.role.label}">Role</span>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" th:href="@{/actuator/health}" target="_blank">
+                <i class="bi bi-heart-pulse me-2"></i>Health check
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <form th:action="@{/logout}" method="post" class="px-2">
+                <button type="submit" id="logoutBtn" class="dropdown-item rounded text-danger">
+                  <i class="bi bi-box-arrow-right me-2"></i>Sign out</button>
+              </form>
+            </li>
+          </ul>
+        </li>
       </ul>
     </div>
-  </nav>
+  </div>
+</nav>
+
+<!-- ========== FLASH MESSAGES ========== -->
+<div th:fragment="flash">
+  <div th:if="${message}" id="flashMessage" class="alert alert-success alert-dismissible fade show auto-dismiss shadow-sm" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i><span th:text="${message}">Saved</span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  <div th:if="${error}" id="flashError" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${error}">Something went wrong</span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+</div>
+
+<!-- ========== STATUS BADGE ========== -->
+<span th:fragment="statusBadge(status)" class="status-badge" th:classappend="'status-' + ${status.name()}"
+      th:text="${status.label}">Requested</span>
+
+<!-- ========== FOOTER ========== -->
+<footer th:fragment="footer" class="app-footer mt-5">
+  <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <span class="footer-note">ReturnHub &mdash; Automated Reverse Logistics Management Portal</span>
+    <span class="small">DevOps Mini Project &bull; <a th:href="@{/actuator/health}" class="text-secondary text-decoration-none"><i class="bi bi-activity"></i> Health</a></span>
+  </div>
+</footer>
+
+<!-- ========== SCRIPTS ========== -->
+<th:block th:fragment="scripts">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script th:src="@{/js/app.js}"></script>
+</th:block>
+
 </body>
 </html>

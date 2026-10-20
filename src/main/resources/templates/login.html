@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Sign in')}"></head>
+<body class="login-body">
+<div class="container-fluid p-0">
+  <div class="row g-0 min-vh-100">
+
+    <!-- Brand panel -->
+    <div class="col-lg-5 d-none d-lg-flex login-brand">
+      <div class="m-auto px-5">
+        <a th:href="@{/}" class="brand brand-lg text-white text-decoration-none">
+          <span class="brand-icon"><i class="bi bi-box-seam"></i></span>ReturnHub</a>
+        <h2 class="mt-5 mb-3">Automated Reverse Logistics Management Portal</h2>
+        <p class="opacity-75">Track every return from request to refund, restock or disposal.</p>
+        <ul class="login-points">
+          <li><i class="bi bi-check-circle-fill"></i>Role-based workspaces</li>
+          <li><i class="bi bi-check-circle-fill"></i>Live dashboard and work queues</li>
+          <li><i class="bi bi-check-circle-fill"></i>Complete status history</li>
+          <li><i class="bi bi-check-circle-fill"></i>Printable return labels</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Form panel -->
+    <div class="col-lg-7 d-flex">
+      <div class="m-auto w-100 login-panel">
+        <h1 class="h3 fw-bold mb-1">Welcome back</h1>
+        <p class="text-muted mb-4">Sign in to continue to your workspace.</p>
+
+        <div th:if="${param.error}" id="loginError" class="alert alert-danger" role="alert">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>Wrong username or password. Please try again.</div>
+        <div th:if="${param.logout}" id="logoutMessage" class="alert alert-success" role="alert">
+          <i class="bi bi-check-circle-fill me-2"></i>You have been signed out.</div>
+
+        <form th:action="@{/login}" method="post" class="mb-4">
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="username">Username</label>
+            <div class="input-group input-group-lg">
+              <span class="input-group-text"><i class="bi bi-person"></i></span>
+              <input type="text" class="form-control" id="username" name="username" autocomplete="username" required autofocus>
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold" for="password">Password</label>
+            <div class="input-group input-group-lg">
+              <span class="input-group-text"><i class="bi bi-lock"></i></span>
+              <input type="password" class="form-control" id="password" name="password" autocomplete="current-password" required>
+            </div>
+          </div>
+          <button type="submit" id="loginBtn" class="btn btn-primary btn-lg w-100 fw-semibold">Sign in</button>
+        </form>
+
+        <div class="demo-box">
+          <div class="fw-semibold mb-2"><i class="bi bi-lightning-charge-fill text-warning me-1"></i>Demo accounts (click to fill)</div>
+          <div class="row g-2">
+            <div class="col-sm-6"><button type="button" class="demo-fill" data-user="customer1" data-pass="Customer@123">
+              <span class="role-dot bg-primary"></span><b>Customer</b><small>customer1</small></button></div>
+            <div class="col-sm-6"><button type="button" class="demo-fill" data-user="customer2" data-pass="Customer@123">
+              <span class="role-dot bg-info"></span><b>Customer 2</b><small>customer2</small></button></div>
+            <div class="col-sm-6"><button type="button" class="demo-fill" data-user="manager1" data-pass="Manager@123">
+              <span class="role-dot bg-warning"></span><b>Return Manager</b><small>manager1</small></button></div>
+            <div class="col-sm-6"><button type="button" class="demo-fill" data-user="warehouse1" data-pass="Warehouse@123">
+              <span class="role-dot bg-success"></span><b>Warehouse Staff</b><small>warehouse1</small></button></div>
+          </div>
+          <div class="small text-muted mt-2">Passwords: Customer@123, Manager@123, Warehouse@123. Demo accounts only.</div>
+        </div>
+        <div class="mt-4 text-center"><a th:href="@{/}" class="text-decoration-none small"><i class="bi bi-arrow-left me-1"></i>Back to home</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

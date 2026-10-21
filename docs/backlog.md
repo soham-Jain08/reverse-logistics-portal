@@ -21,7 +21,7 @@
 | | **TASK-08** | Pipeline as Code & Server Deployment | CI/CD | **DONE** | Jenkinsfile, Pipeline Run Log, Tomcat Deployment on Port 8082 |
 | | **TASK-09** | Selenium Test Design and Local Execution | Testing | **DONE** | Test Plan, Selenium Scripts, Local Test Report, Failure Screenshot Mechanism |
 | | **TASK-10** | Continuous Testing in Jenkins | CI/CD | **DONE** | Jenkins Test Report, Failed Pipeline Evidence, Defect Correction Commit, Successful Rerun |
-| **Sprint 3** | **TASK-11** | Containerization with Docker | Containers | Backlog | Dockerfile, Containerized app & test |
+| **Sprint 3** | **TASK-11** | Containerization with Docker | Containers | **DONE** | Dockerfile, image details, Docker log, running container |
 | | **TASK-12** | Multi-Container Orchestration (Docker Compose) | Ops | Backlog | docker-compose.yml, App + DB service |
 | | **TASK-13** | Configuration Management with Ansible | IaC | Backlog | Ansible playbook, automated provisioning |
 | | **TASK-14** | Automated End-to-End Testing (Selenium) | Testing | Backlog | Selenium test automation suite |
@@ -199,10 +199,54 @@
 
 ---
 
-## 3. Upcoming Sprint Backlog (Tasks 11 to 15)
+### Sprint 3: Containerization, Orchestration & Production Readiness
 
-* **TASK-11 (Sprint 3):** Docker containerization (multi-stage build, minimal Alpine/Eclipse-Temurin JRE).
-* **TASK-12 (Sprint 3):** Docker Compose multi-service deployment.
+#### TASK-11: Docker Image and Container Lifecycle — COMPLETED
+* **User Story:** As a DevOps engineer, I want to containerize the Reverse Logistics Management Portal with a secure, lightweight Dockerfile, build and tag the production container image, map dedicated host ports, inspect runtime logs, and validate the complete container lifecycle (run, stop, start, restart, rm) with active healthchecks and live endpoint responses.
+* **Scope & Completed Capabilities:**
+  1. **Production Dockerfile & Optimization:**
+     - Base image: `eclipse-temurin:17-jre-alpine` (lightweight 181.6 MB footprint).
+     - Non-root user security policy: Dedicated user `appuser:appgroup`.
+     - Signal forwarding: `exec java $JAVA_OPTS -jar app.war` for graceful SIGTERM (exit code 143) handling.
+     - Embedded H2 database persistence directory pre-created at `/app/data/rlpdb`.
+     - Integrated Docker `HEALTHCHECK` against Spring Boot Actuator (`/actuator/health`).
+     - Added `.dockerignore` eliminating repository build clutter.
+  2. **Image Building & Tagging:**
+     - Tagged versioned image `reverse-logistics-portal:v1.0.0` and `reverse-logistics-portal:latest`.
+     - Total unpacked image size: 181.6 MB.
+     - Extracted full image metadata using `docker image inspect`.
+  3. **Port Mapping & Container Deployment:**
+     - Container `rlp-container` deployed with host port mapping `8083:8080`.
+     - Zero collision with Jenkins (`8080`), local dev (`8081`), and Tomcat (`8082`).
+  4. **Live Verification & Health Monitoring:**
+     - Container status: `Up (healthy)`.
+     - Actuator health check response: `{"groups":["liveness","readiness"],"status":"UP"}`.
+     - Application login page response: HTTP 200 OK (`Sign in | ReturnHub`).
+  5. **Complete Lifecycle Transition Verification:**
+     - `docker run`: Container booted and assigned PID 1.
+     - `docker inspect`: Extracted runtime state and healthcheck records.
+     - `docker logs`: Inspected Spring Boot 4.1.1 and HikariCP database connection logs.
+     - `docker stop`: Verified graceful shutdown with exit code `143` (`SIGTERM`).
+     - `docker start`: Brought container back to healthy state in 3 seconds.
+     - `docker restart`: Verified clean service restart.
+     - `docker rm`: Created and removed test container `rlp-temp-test` to validate decommissioning.
+* **Definition of Done (DoD) Checklist:**
+  - [x] Dockerfile authored with Alpine JRE 17, non-root user, and healthcheck.
+  - [x] .dockerignore authored.
+  - [x] Image built and tagged (`v1.0.0`, `latest`).
+  - [x] Image metadata inspected and documented.
+  - [x] Container deployed with port mapping `8083:8080`.
+  - [x] Container logs inspected and verified.
+  - [x] Live HTTP endpoints verified (HTTP 200, Actuator `UP`).
+  - [x] Full container lifecycle validated (`run`, `stop`, `start`, `restart`, `rm`).
+  - [x] Full delivery evidence documented in `docs/TASK11-DELIVERY.md`.
+  - [x] Product backlog updated.
+
+---
+
+## 3. Upcoming Sprint Backlog (Tasks 12 to 15)
+
+* **TASK-12 (Sprint 3):** Docker Compose multi-service deployment (App + PostgreSQL / MySQL service).
 * **TASK-13 (Sprint 3):** Ansible playbook for automated provisioning and deployment.
 * **TASK-14 (Sprint 3):** Performance and Load Testing.
 * **TASK-15 (Sprint 3):** CD Pipeline & Production Monitoring (`/actuator/health`, metrics, live demo).

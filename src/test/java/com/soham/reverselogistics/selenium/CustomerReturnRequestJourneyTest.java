@@ -46,7 +46,8 @@ public class CustomerReturnRequestJourneyTest extends BaseSeleniumTest {
 
         assertTrue(bodyText.contains(testOrderNumber.toLowerCase()), "Created order number should be visible on details view");
         assertTrue(bodyText.contains(testProduct.toLowerCase()), "Product name should be visible on details view");
-        assertTrue(bodyText.contains("requested"), "Status should be initialized to Requested");
+        // DELIBERATE DEFECT FOR TASK 10 DEMONSTRATION: Flawed assertion expecting 'approved' immediately upon creation
+        assertTrue(bodyText.contains("approved"), "Status should be initialized to Requested (Deliberate Defect for Task 10: Expected approved)");
 
         captureEvidence("Journey1_ReturnCreated");
     }

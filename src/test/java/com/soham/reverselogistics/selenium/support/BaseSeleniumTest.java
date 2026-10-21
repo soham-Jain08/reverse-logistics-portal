@@ -52,7 +52,11 @@ public abstract class BaseSeleniumTest implements WebDriverHolder {
         passInput.sendKeys(password);
 
         WebElement submitBtn = driver.findElement(By.id("loginBtn"));
-        submitBtn.click();
+        try {
+            submitBtn.click();
+        } catch (Exception e) {
+            ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", submitBtn);
+        }
 
         wait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
     }

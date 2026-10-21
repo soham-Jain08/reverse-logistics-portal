@@ -46,8 +46,9 @@ public class CustomerReturnRequestJourneyTest extends BaseSeleniumTest {
 
         assertTrue(bodyText.contains(testOrderNumber.toLowerCase()), "Created order number should be visible on details view");
         assertTrue(bodyText.contains(testProduct.toLowerCase()), "Product name should be visible on details view");
-        // DELIBERATE DEFECT FOR TASK 10 DEMONSTRATION: Flawed assertion expecting 'approved' immediately upon creation
-        assertTrue(bodyText.contains("approved"), "Status should be initialized to Requested (Deliberate Defect for Task 10: Expected approved)");
+        // DELIBERATE DEFECT FOR TASK 10 DEMONSTRATION: Status badge should be Requested but assertion expects APPROVED
+        assertEquals("APPROVED", driver.findElement(By.className("status-badge")).getText().trim(),
+                "Deliberate Defect for Task 10: New return status expected APPROVED but was Requested");
 
         captureEvidence("Journey1_ReturnCreated");
     }

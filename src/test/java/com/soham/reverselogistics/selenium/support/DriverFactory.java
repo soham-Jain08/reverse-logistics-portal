@@ -26,6 +26,11 @@ public class DriverFactory {
     }
 
     public static WebDriver createDriver() {
+        File localDriver = new File("C:\\Users\\CSC\\.cache\\selenium\\chromedriver\\win64\\155.0.8059.84\\chromedriver.exe");
+        if (localDriver.exists() && System.getProperty("webdriver.chrome.driver") == null) {
+            System.setProperty("webdriver.chrome.driver", localDriver.getAbsolutePath());
+        }
+
         WebDriver driver;
         String browser = System.getProperty("selenium.browser", "chrome").toLowerCase();
 
@@ -33,6 +38,7 @@ public class DriverFactory {
             if ("edge".equals(browser)) {
                 EdgeOptions options = new EdgeOptions();
                 options.addArguments("--headless=new", "--disable-gpu", "--no-sandbox",
+                        "--disable-dev-shm-usage", "--disable-software-rasterizer",
                         "--window-size=1920,1080", "--remote-allow-origins=*");
                 File edgeBin = new File("C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe");
                 if (edgeBin.exists()) {
@@ -42,6 +48,7 @@ public class DriverFactory {
             } else {
                 ChromeOptions options = new ChromeOptions();
                 options.addArguments("--headless=new", "--disable-gpu", "--no-sandbox",
+                        "--disable-dev-shm-usage", "--disable-software-rasterizer", "--disable-extensions",
                         "--window-size=1920,1080", "--remote-allow-origins=*");
                 File chromeBin = new File("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe");
                 if (chromeBin.exists()) {
@@ -53,6 +60,7 @@ public class DriverFactory {
             System.err.println("Primary browser init failed (" + browser + "), attempting alternate: " + e.getMessage());
             ChromeOptions options = new ChromeOptions();
             options.addArguments("--headless=new", "--disable-gpu", "--no-sandbox",
+                    "--disable-dev-shm-usage", "--disable-software-rasterizer", "--disable-extensions",
                     "--window-size=1920,1080", "--remote-allow-origins=*");
             driver = new ChromeDriver(options);
         }

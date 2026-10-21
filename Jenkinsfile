@@ -16,22 +16,39 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo "=== STAGE 1: CHECKOUT ==="
+                echo "=========================================================="
+                echo "STAGE 1: SCM CHECKOUT"
                 echo "Target Environment: ${params.DEPLOY_ENV}"
+                echo "=========================================================="
                 checkout scm
             }
         }
 
-        stage('Build & Test') {
+        stage('Continuous Testing') {
             steps {
-                echo "=== STAGE 2: BUILD & TEST ==="
-                bat 'call mvnw.cmd clean test'
+                echo "=========================================================="
+                echo "STAGE 2: CONTINUOUS TESTING (SELENIUM & UNIT SUITE)"
+                echo "Executing Selenium WebDriver user journeys & unit tests..."
+                echo "Target portal URL for browser tests: http://localhost:8081"
+                echo "=========================================================="
+                bat 'call mvnw.cmd test -Dapp.url=http://localhost:8081'
+            }
+            post {
+                always {
+                    echo "Publishing JUnit test results..."
+                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
+                    echo "Archiving test failure & journey screenshot artifacts..."
+                    archiveArtifacts allowEmptyArchive: true, artifacts: 'target/screenshots/**'
+                }
             }
         }
 
         stage('Package') {
             steps {
-                echo "=== STAGE 3: PACKAGE ==="
+                echo "=========================================================="
+                echo "STAGE 3: PACKAGE (EXECUTABLE WAR)"
+                echo "Quality gate passed! Packaging release artifact..."
+                echo "=========================================================="
                 bat 'call mvnw.cmd package -DskipTests=true'
                 archiveArtifacts artifacts: 'target/*.war', fingerprint: true
             }
@@ -39,12 +56,14 @@ pipeline {
 
         stage('Deploy to Server') {
             steps {
-                echo "=== STAGE 4: SERVER DEPLOYMENT ==="
-                echo "Deploying to Tomcat on port ${params.TOMCAT_PORT} (${params.DEPLOY_ENV} environment)..."
+                echo "=========================================================="
+                echo "STAGE 4: SERVER DEPLOYMENT (APACHE TOMCAT 10.1)"
+                echo "Deploying verified build to Tomcat on port ${params.TOMCAT_PORT} (${params.DEPLOY_ENV})..."
+                echo "=========================================================="
                 bat """
                     copy /Y "target\\reverse-logistics-portal-0.0.1-SNAPSHOT.war" "${params.TOMCAT_WEBAPPS}\\${params.CONTEXT_PATH}.war"
                 """
-                echo "WAR deployed to Tomcat webapps. Verifying HTTP health..."
+                echo "WAR deployed to Tomcat webapps directory. Verifying HTTP health..."
                 sleep time: 5, unit: 'SECONDS'
                 bat "curl.exe -s -I http://localhost:${params.TOMCAT_PORT}/${params.CONTEXT_PATH}/login"
             }
@@ -55,12 +74,17 @@ pipeline {
         success {
             echo "=========================================================="
             echo "CI/CD PIPELINE SUCCESSFUL!"
+            echo "All tests passed and application successfully deployed."
             echo "Deployed Application URL: http://localhost:${params.TOMCAT_PORT}/${params.CONTEXT_PATH}/"
             echo "Environment: ${params.DEPLOY_ENV}"
             echo "=========================================================="
         }
         failure {
-            echo "CI/CD Pipeline execution failed. Please check build logs."
+            echo "=========================================================="
+            echo "CI/CD PIPELINE HALTED: Test or build failure detected!"
+            echo "Deployment was stopped to protect the target environment."
+            echo "Inspect JUnit test report and failure screenshots in Jenkins."
+            echo "=========================================================="
         }
     }
 }

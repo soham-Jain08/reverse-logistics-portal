@@ -20,7 +20,7 @@
 | | **TASK-07** | Jenkins Installation & Continuous Integration Job | CI/CD | **DONE** | Configured Jenkins Job, Build Log, Polling Trigger, Archived WAR |
 | | **TASK-08** | Pipeline as Code & Server Deployment | CI/CD | **DONE** | Jenkinsfile, Pipeline Run Log, Tomcat Deployment on Port 8082 |
 | | **TASK-09** | Selenium Test Design and Local Execution | Testing | **DONE** | Test Plan, Selenium Scripts, Local Test Report, Failure Screenshot Mechanism |
-| | **TASK-10** | Automated Test Integration in CI | CI/CD | Backlog | Automated test stage in Jenkins |
+| | **TASK-10** | Continuous Testing in Jenkins | CI/CD | **DONE** | Jenkins Test Report, Failed Pipeline Evidence, Defect Correction Commit, Successful Rerun |
 | **Sprint 3** | **TASK-11** | Containerization with Docker | Containers | Backlog | Dockerfile, Containerized app & test |
 | | **TASK-12** | Multi-Container Orchestration (Docker Compose) | Ops | Backlog | docker-compose.yml, App + DB service |
 | | **TASK-13** | Configuration Management with Ansible | IaC | Backlog | Ansible playbook, automated provisioning |
@@ -168,11 +168,39 @@
   - [x] Local test delivery report documented (`docs/TASK9-DELIVERY.md`).
   - [x] Product backlog updated.
 
+#### TASK-10: Continuous Testing in Jenkins — COMPLETED
+* **User Story:** As a DevOps engineer, I want our Jenkins Declarative Pipeline to automatically execute the Selenium browser journey and unit test suites on every build, publish interactive JUnit test reports and failure screenshot artifacts, and enforce an automated Quality Gate that halts downstream packaging and server deployment upon any test failure.
+* **Scope & Completed Capabilities:**
+  1. **Continuous Testing Pipeline Integration:**
+     - Updated `Jenkinsfile` with a dedicated `Continuous Testing` stage running `call mvnw.cmd test -Dapp.url=http://localhost:8081`.
+     - Configured `junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'`.
+     - Configured `archiveArtifacts allowEmptyArchive: true, artifacts: 'target/screenshots/**'`.
+  2. **Deliberate Defect Introduction & Quality Gate Halt:**
+     - Introduced an invalid status assertion in `CustomerReturnRequestJourneyTest.java` (commit `8618dba`).
+     - Executed pipeline Build #4: 1 failure recorded in JUnit test report.
+     - Quality gate immediately skipped `Package` and `Deploy to Server` stages, halting the deployment to protect the target server.
+     - Failure screenshot captured and archived in Jenkins.
+  3. **Defect Correction Commit:**
+     - Restored valid status assertion in `CustomerReturnRequestJourneyTest.java` (commit `0481246`).
+     - Hardened browser test driver with `PageLoadStrategy.EAGER` and native form submission (commit `753005b`).
+  4. **Successful Pipeline Rerun & Server Deployment:**
+     - Executed pipeline Build #6: 100% test pass rate (9/9 tests passed).
+     - Released and packaged `reverse-logistics-portal-0.0.1-SNAPSHOT.war`.
+     - Deployed to Apache Tomcat 10.1 on port `8082` (`/reverse-logistics-portal/`) with HTTP 200 health check verification.
+* **Definition of Done (DoD) Checklist:**
+  - [x] Selenium and unit tests integrated into Jenkins Declarative Pipeline.
+  - [x] JUnit test report publishing and failure screenshot archiving configured.
+  - [x] Quality Gate halts pipeline deployment when any test fails (verified in Build #4).
+  - [x] Deliberate defect committed and verified halting deployment.
+  - [x] Defect corrected via Git commit (`0481246`).
+  - [x] Successful pipeline rerun (Build #6) passes 100% and deploys to Tomcat on port 8082.
+  - [x] Full delivery evidence documented in `docs/TASK10-DELIVERY.md`.
+  - [x] Product backlog updated.
+
 ---
 
-## 3. Upcoming Sprint Backlog (Tasks 10 to 15)
+## 3. Upcoming Sprint Backlog (Tasks 11 to 15)
 
-* **TASK-10 (Sprint 2):** Automated Test Integration in CI Pipeline.
 * **TASK-11 (Sprint 3):** Docker containerization (multi-stage build, minimal Alpine/Eclipse-Temurin JRE).
 * **TASK-12 (Sprint 3):** Docker Compose multi-service deployment.
 * **TASK-13 (Sprint 3):** Ansible playbook for automated provisioning and deployment.

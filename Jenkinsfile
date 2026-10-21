@@ -3,9 +3,11 @@ pipeline {
 
     parameters {
         choice(name: 'DEPLOY_ENV', choices: ['production', 'staging', 'development'], description: 'Deployment environment target')
-        string(name: 'TOMCAT_PORT', defaultValue: '8082', description: 'Apache Tomcat HTTP Port')
-        string(name: 'TOMCAT_WEBAPPS', defaultValue: 'C:\\Users\\CSC\\tomcat\\apache-tomcat-10.1.61\\webapps', description: 'Tomcat webapps deployment path')
-        string(name: 'CONTEXT_PATH', defaultValue: 'reverse-logistics-portal', description: 'Application context root')
+        string(name: 'DOCKER_REGISTRY', defaultValue: 'localhost:5000', description: 'Target Docker Registry endpoint')
+        string(name: 'IMAGE_NAME', defaultValue: 'reverse-logistics-portal', description: 'Docker image repository name')
+        string(name: 'CONTAINER_NAME', defaultValue: 'rlp-production-container', description: 'Target deployed container name')
+        string(name: 'HOST_PORT', defaultValue: '8083', description: 'Host port mapped to container port 8080')
+        string(name: 'APP_TEST_URL', defaultValue: 'http://localhost:8081', description: 'Portal URL for Selenium journeys')
     }
 
     environment {
@@ -18,7 +20,8 @@ pipeline {
             steps {
                 echo "=========================================================="
                 echo "STAGE 1: SCM CHECKOUT"
-                echo "Target Environment: ${params.DEPLOY_ENV}"
+                echo "Environment: ${params.DEPLOY_ENV}"
+                echo "Build Number: ${env.BUILD_NUMBER}"
                 echo "=========================================================="
                 checkout scm
             }
@@ -29,9 +32,9 @@ pipeline {
                 echo "=========================================================="
                 echo "STAGE 2: CONTINUOUS TESTING (SELENIUM & UNIT SUITE)"
                 echo "Executing Selenium WebDriver user journeys & unit tests..."
-                echo "Target portal URL for browser tests: http://localhost:8081"
+                echo "Target portal URL for browser tests: ${params.APP_TEST_URL}"
                 echo "=========================================================="
-                bat 'call mvnw.cmd test -Dapp.url=http://localhost:8081'
+                bat "call mvnw.cmd test -Dapp.url=${params.APP_TEST_URL}"
             }
             post {
                 always {
@@ -54,18 +57,68 @@ pipeline {
             }
         }
 
-        stage('Deploy to Server') {
+        stage('Build Docker Image') {
             steps {
                 echo "=========================================================="
-                echo "STAGE 4: SERVER DEPLOYMENT (APACHE TOMCAT 10.1)"
-                echo "Deploying verified build to Tomcat on port ${params.TOMCAT_PORT} (${params.DEPLOY_ENV})..."
+                echo "STAGE 4: BUILD VERSIONED DOCKER IMAGE"
+                echo "Registry Target: ${params.DOCKER_REGISTRY}"
+                echo "Image Repository: ${params.IMAGE_NAME}"
+                echo "Version Tag: build-${env.BUILD_NUMBER}"
                 echo "=========================================================="
                 bat """
-                    copy /Y "target\\reverse-logistics-portal-0.0.1-SNAPSHOT.war" "${params.TOMCAT_WEBAPPS}\\${params.CONTEXT_PATH}.war"
+                    docker build -t ${params.DOCKER_REGISTRY}/${params.IMAGE_NAME}:build-${env.BUILD_NUMBER} -t ${params.DOCKER_REGISTRY}/${params.IMAGE_NAME}:latest -t ${params.IMAGE_NAME}:build-${env.BUILD_NUMBER} -t ${params.IMAGE_NAME}:latest .
                 """
-                echo "WAR deployed to Tomcat webapps directory. Verifying HTTP health..."
-                sleep time: 5, unit: 'SECONDS'
-                bat "curl.exe -s -I http://localhost:${params.TOMCAT_PORT}/${params.CONTEXT_PATH}/login"
+                echo "Image build successful. Inspecting built image:"
+                bat "docker images ${params.IMAGE_NAME}"
+            }
+        }
+
+        stage('Publish to Registry') {
+            steps {
+                echo "=========================================================="
+                echo "STAGE 5: PUBLISH IMAGE TO REGISTRY"
+                echo "Pushing versioned image and latest tag to ${params.DOCKER_REGISTRY}..."
+                echo "=========================================================="
+                bat """
+                    docker push ${params.DOCKER_REGISTRY}/${params.IMAGE_NAME}:build-${env.BUILD_NUMBER}
+                    docker push ${params.DOCKER_REGISTRY}/${params.IMAGE_NAME}:latest
+                """
+                echo "Verifying image in Docker Registry catalog:"
+                bat "curl.exe -s http://${params.DOCKER_REGISTRY}/v2/${params.IMAGE_NAME}/tags/list"
+            }
+        }
+
+        stage('Deploy Container') {
+            steps {
+                echo "=========================================================="
+                echo "STAGE 6: CONTINUOUS DEPLOYMENT (CONTAINER DEPLOYMENT)"
+                echo "Deploying fresh container '${params.CONTAINER_NAME}' on port ${params.HOST_PORT}..."
+                echo "Deploying image: ${params.DOCKER_REGISTRY}/${params.IMAGE_NAME}:build-${env.BUILD_NUMBER}"
+                echo "=========================================================="
+                bat """
+                    docker stop ${params.CONTAINER_NAME} >nul 2>&1 || ver >nul
+                    docker rm -f ${params.CONTAINER_NAME} >nul 2>&1 || ver >nul
+                    docker stop rlp-container >nul 2>&1 || ver >nul
+                    docker rm -f rlp-container >nul 2>&1 || ver >nul
+                    docker run -d --name ${params.CONTAINER_NAME} -p ${params.HOST_PORT}:8080 ${params.DOCKER_REGISTRY}/${params.IMAGE_NAME}:build-${env.BUILD_NUMBER}
+                """
+                echo "Verifying deployed container status:"
+                bat "docker ps --filter \"name=${params.CONTAINER_NAME}\""
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                echo "=========================================================="
+                echo "STAGE 7: POST-DEPLOYMENT HEALTH VERIFICATION"
+                echo "Waiting for Spring Boot initialization inside container..."
+                echo "=========================================================="
+                sleep time: 20, unit: 'SECONDS'
+                echo "Probing container health endpoint..."
+                bat "curl.exe -s -f http://localhost:${params.HOST_PORT}/actuator/health"
+                echo "Probing container login endpoint..."
+                bat "curl.exe -s -I http://localhost:${params.HOST_PORT}/login"
+                echo "Fresh container is healthy and serving HTTP 200 traffic!"
             }
         }
     }
@@ -73,17 +126,19 @@ pipeline {
     post {
         success {
             echo "=========================================================="
-            echo "CI/CD PIPELINE SUCCESSFUL!"
-            echo "All tests passed and application successfully deployed."
-            echo "Deployed Application URL: http://localhost:${params.TOMCAT_PORT}/${params.CONTEXT_PATH}/"
-            echo "Environment: ${params.DEPLOY_ENV}"
+            echo "JENKINS-DOCKER CD PIPELINE SUCCESSFUL!"
+            echo "Image Version: ${params.DOCKER_REGISTRY}/${params.IMAGE_NAME}:build-${env.BUILD_NUMBER}"
+            echo "Deployed Container: ${params.CONTAINER_NAME} (Port ${params.HOST_PORT})"
+            echo "Live Application URL: http://localhost:${params.HOST_PORT}/"
+            echo "Health Check: http://localhost:${params.HOST_PORT}/actuator/health"
+            echo "Target Environment: ${params.DEPLOY_ENV}"
             echo "=========================================================="
         }
         failure {
             echo "=========================================================="
-            echo "CI/CD PIPELINE HALTED: Test or build failure detected!"
-            echo "Deployment was stopped to protect the target environment."
-            echo "Inspect JUnit test report and failure screenshots in Jenkins."
+            echo "CI/CD PIPELINE HALTED: Test, build, or deployment failure!"
+            echo "Deployment was halted to protect the target environment."
+            echo "Inspect test reports, build logs, or container diagnostics in Jenkins."
             echo "=========================================================="
         }
     }

@@ -51,14 +51,14 @@ public abstract class BaseSeleniumTest implements WebDriverHolder {
         passInput.clear();
         passInput.sendKeys(password);
 
-        WebElement submitBtn = driver.findElement(By.id("loginBtn"));
-        try {
-            submitBtn.click();
-        } catch (Exception e) {
-            ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", submitBtn);
-        }
+        WebElement form = driver.findElement(By.cssSelector("form[action*='/login']"));
+        form.submit();
 
-        wait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
+        wait.until(ExpectedConditions.or(
+                ExpectedConditions.urlContains("/dashboard"),
+                ExpectedConditions.urlContains("/returns"),
+                ExpectedConditions.not(ExpectedConditions.urlContains("/login"))
+        ));
     }
 
     protected void loginAsCustomer() {

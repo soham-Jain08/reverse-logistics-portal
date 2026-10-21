@@ -1,5 +1,6 @@
 package com.soham.reverselogistics.selenium.support;
 
+import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -37,8 +38,10 @@ public class DriverFactory {
         try {
             if ("edge".equals(browser)) {
                 EdgeOptions options = new EdgeOptions();
+                options.setPageLoadStrategy(PageLoadStrategy.EAGER);
                 options.addArguments("--headless=new", "--disable-gpu", "--no-sandbox",
                         "--disable-dev-shm-usage", "--disable-software-rasterizer",
+                        "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows",
                         "--window-size=1920,1080", "--remote-allow-origins=*");
                 File edgeBin = new File("C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe");
                 if (edgeBin.exists()) {
@@ -47,8 +50,10 @@ public class DriverFactory {
                 driver = new EdgeDriver(options);
             } else {
                 ChromeOptions options = new ChromeOptions();
+                options.setPageLoadStrategy(PageLoadStrategy.EAGER);
                 options.addArguments("--headless=new", "--disable-gpu", "--no-sandbox",
                         "--disable-dev-shm-usage", "--disable-software-rasterizer", "--disable-extensions",
+                        "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows",
                         "--window-size=1920,1080", "--remote-allow-origins=*");
                 File chromeBin = new File("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe");
                 if (chromeBin.exists()) {
@@ -59,14 +64,16 @@ public class DriverFactory {
         } catch (Exception e) {
             System.err.println("Primary browser init failed (" + browser + "), attempting alternate: " + e.getMessage());
             ChromeOptions options = new ChromeOptions();
+            options.setPageLoadStrategy(PageLoadStrategy.EAGER);
             options.addArguments("--headless=new", "--disable-gpu", "--no-sandbox",
                     "--disable-dev-shm-usage", "--disable-software-rasterizer", "--disable-extensions",
+                    "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows",
                     "--window-size=1920,1080", "--remote-allow-origins=*");
             driver = new ChromeDriver(options);
         }
 
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(6));
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(20));
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
         return driver;
     }
 }

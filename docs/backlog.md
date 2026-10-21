@@ -22,7 +22,7 @@
 | | **TASK-09** | Selenium Test Design and Local Execution | Testing | **DONE** | Test Plan, Selenium Scripts, Local Test Report, Failure Screenshot Mechanism |
 | | **TASK-10** | Continuous Testing in Jenkins | CI/CD | **DONE** | Jenkins Test Report, Failed Pipeline Evidence, Defect Correction Commit, Successful Rerun |
 | **Sprint 3** | **TASK-11** | Containerization with Docker | Containers | **DONE** | Dockerfile, image details, Docker log, running container |
-| | **TASK-12** | Multi-Container Orchestration (Docker Compose) | Ops | Backlog | docker-compose.yml, App + DB service |
+| | **TASK-12** | Jenkins-Docker Continuous Deployment | CI/CD & Containers | **DONE** | Versioned Image, Registry Evidence, End-to-End Commit-to-Container Pipeline |
 | | **TASK-13** | Configuration Management with Ansible | IaC | Backlog | Ansible playbook, automated provisioning |
 | | **TASK-14** | Automated End-to-End Testing (Selenium) | Testing | Backlog | Selenium test automation suite |
 | | **TASK-15** | Continuous Deployment and Monitoring | Operations | Backlog | CD deployment, Health monitoring & final demo |
@@ -244,9 +244,47 @@
 
 ---
 
-## 3. Upcoming Sprint Backlog (Tasks 12 to 15)
+#### TASK-12: Jenkins-Docker Continuous Deployment — COMPLETED
+* **User Story:** As a DevOps engineer, I want to extend the Jenkins CI/CD pipeline to automatically execute our automated testing suite, build a versioned Docker image, publish it to a local Docker registry, and deploy a fresh container with post-deployment health verification so that we achieve a zero-touch, commit-to-container continuous deployment lifecycle.
+* **Scope & Completed Capabilities:**
+  1. **Pipeline as Code Extension (`Jenkinsfile`):**
+     - Parameterized settings: `DEPLOY_ENV`, `DOCKER_REGISTRY`, `IMAGE_NAME`, `CONTAINER_NAME`, `HOST_PORT`, `APP_TEST_URL`.
+     - Structured 7-stage Declarative Pipeline with clean stage separation.
+  2. **Continuous Testing Quality Gate:**
+     - Executes all 9 Selenium WebDriver user journeys and Spring Boot unit tests before any packaging or deployment.
+     - Automated halting on test failure to protect the target production environment.
+  3. **Release Packaging & Fingerprinting:**
+     - Packages release-ready executable WAR archive `reverse-logistics-portal-0.0.1-SNAPSHOT.war` (51.8 MB).
+     - Fingerprints and archives build artifact in Jenkins.
+  4. **Versioned Image Building & Tagging:**
+     - Builds lightweight image tagged dynamically with immutable build number (`localhost:5000/reverse-logistics-portal:build-11`) and floating `:latest` tag.
+     - Unpacked image size: 182 MB.
+  5. **Docker Registry Publication (`localhost:5000`):**
+     - Pushes all image layers to active Docker Registry container (`registry:2`).
+     - Registry V2 API validation: `http://localhost:5000/v2/_catalog` and `/v2/reverse-logistics-portal/tags/list`.
+  6. **Automated Container Deployment:**
+     - Deploys fresh container `rlp-production-container` on host port `8083`.
+     - Zero collision with Jenkins (`8080`), local dev (`8081`), and Tomcat (`8082`).
+  7. **Post-Deployment Health Verification:**
+     - Automatic polling of `/actuator/health` (returns `{"groups":["liveness","readiness"],"status":"UP"}`).
+     - Live authentication endpoint verification (HTTP STATUS: 200).
+* **Definition of Done (DoD) Checklist:**
+  - [x] Jenkinsfile updated with versioned image build, registry publish, and automated container deployment.
+  - [x] Parameterized environment settings configured.
+  - [x] Continuous Testing Quality Gate enforces 100% test pass before deployment.
+  - [x] Versioned Docker image built and tagged (`build-11`, `latest`).
+  - [x] Versioned image pushed to local Docker registry on port 5000.
+  - [x] Registry catalog and tags API evidence verified.
+  - [x] Fresh container deployed (`rlp-production-container` on port 8083).
+  - [x] Post-deployment health verification passes (`UP`, HTTP 200).
+  - [x] End-to-end commit-to-container pipeline executed with 100% SUCCESS in Build #11.
+  - [x] Full delivery report documented in `docs/TASK12-DELIVERY.md`.
+  - [x] Product backlog updated.
 
-* **TASK-12 (Sprint 3):** Docker Compose multi-service deployment (App + PostgreSQL / MySQL service).
-* **TASK-13 (Sprint 3):** Ansible playbook for automated provisioning and deployment.
-* **TASK-14 (Sprint 3):** Performance and Load Testing.
-* **TASK-15 (Sprint 3):** CD Pipeline & Production Monitoring (`/actuator/health`, metrics, live demo).
+---
+
+## 3. Upcoming Sprint Backlog (Tasks 13 to 15)
+
+* **TASK-13 (Sprint 3):** Configuration Management with Ansible (automated provisioning & deployment playbook).
+* **TASK-14 (Sprint 3):** Performance, Stress and Load Testing.
+* **TASK-15 (Sprint 3):** Production Monitoring, Live Demo & Final Project Release.

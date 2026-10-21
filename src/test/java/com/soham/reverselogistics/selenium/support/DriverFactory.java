@@ -54,6 +54,8 @@ public class DriverFactory {
                 options.addArguments("--headless=new", "--disable-gpu", "--no-sandbox",
                         "--disable-dev-shm-usage", "--disable-software-rasterizer", "--disable-extensions",
                         "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows",
+                        "--disable-features=IsolateOrigins,site-per-process",
+                        "--blink-settings=imagesEnabled=false",
                         "--window-size=1920,1080", "--remote-allow-origins=*");
                 File chromeBin = new File("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe");
                 if (chromeBin.exists()) {
@@ -68,12 +70,14 @@ public class DriverFactory {
             options.addArguments("--headless=new", "--disable-gpu", "--no-sandbox",
                     "--disable-dev-shm-usage", "--disable-software-rasterizer", "--disable-extensions",
                     "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows",
+                    "--disable-features=IsolateOrigins,site-per-process",
+                    "--blink-settings=imagesEnabled=false",
                     "--window-size=1920,1080", "--remote-allow-origins=*");
             driver = new ChromeDriver(options);
         }
 
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(6));
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
         return driver;
     }
 }

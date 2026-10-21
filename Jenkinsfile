@@ -113,12 +113,12 @@ pipeline {
                 echo "STAGE 7: POST-DEPLOYMENT HEALTH VERIFICATION"
                 echo "Waiting for Spring Boot initialization inside container..."
                 echo "=========================================================="
-                sleep time: 20, unit: 'SECONDS'
-                echo "Probing container health endpoint..."
-                bat "curl.exe -s -f http://localhost:${params.HOST_PORT}/actuator/health"
+                sleep time: 25, unit: 'SECONDS'
+                echo "Probing container health endpoint with automatic retry..."
+                bat "curl.exe --retry 15 --retry-delay 5 --retry-connrefused -s -f http://localhost:${params.HOST_PORT}/actuator/health"
                 echo "Probing container login endpoint..."
-                bat "curl.exe -s -I http://localhost:${params.HOST_PORT}/login"
-                echo "Fresh container is healthy and serving HTTP 200 traffic!"
+                bat "curl.exe --retry 10 --retry-delay 3 --retry-connrefused -s -o nul -w \"HTTP STATUS: %%{http_code}\" http://localhost:${params.HOST_PORT}/login"
+                echo "Fresh container is healthy and serving HTTP traffic!"
             }
         }
     }

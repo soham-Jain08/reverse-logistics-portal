@@ -1,0 +1,23 @@
+---
+# ==============================================================================
+# Playbook Shortcut: Provision Reverse Logistics Management Portal Target Node
+# ==============================================================================
+
+- name: Provision and Configure Reverse Logistics Management Portal Target Node
+  hosts: portal_nodes
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Display pre-provisioning host information
+      ansible.builtin.debug:
+        msg:
+          - "Configuring Target Host: {{ inventory_hostname }}"
+          - "Operating System: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }} ({{ ansible_facts['os_family'] }})"
+          - "Kernel: {{ ansible_facts['kernel'] }}"
+          - "Architecture: {{ ansible_facts['architecture'] }}"
+          - "Target Port: {{ app_port }}"
+          - "Target User: {{ app_user }}:{{ app_group }}"
+
+  roles:
+    - role: reverse_logistics_portal

@@ -1,0 +1,12 @@
+---
+# ==============================================================================
+# Task: 07_logrotate - Log Rotation and Archival Policy
+# ==============================================================================
+
+- name: Deploy logrotate configuration for portal logs
+  ansible.builtin.template:
+    src: logrotate-rlp.j2
+    dest: "/etc/logrotate.d/{{ app_name }}"
+    owner: root
+    group: root
+    mode: "0644"

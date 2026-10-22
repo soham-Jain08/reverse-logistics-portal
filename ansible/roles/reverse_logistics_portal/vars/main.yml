@@ -1,0 +1,64 @@
+---
+# ==============================================================================
+# Role Variables: Reverse Logistics Management Portal
+# ==============================================================================
+
+# Application Identity & Metadata
+app_name: reverse-logistics-portal
+app_version: 0.0.1-SNAPSHOT
+app_description: "Automated Reverse Logistics Management Portal - Enterprise Edition"
+app_env: production
+
+# User and Group Security Definition (Least Privilege)
+app_user: rlpuser
+app_group: rlpgroup
+app_user_uid: 1500
+app_group_gid: 1500
+app_user_home: "/opt/{{ app_name }}"
+app_user_shell: "/usr/sbin/nologin"
+
+# Filesystem Hierarchy (FHS Compliant)
+app_base_dir: "/opt/{{ app_name }}"
+app_bin_dir: "{{ app_base_dir }}/bin"
+app_config_dir: "/etc/{{ app_name }}"
+app_data_dir: "/var/lib/{{ app_name }}/data"
+app_log_dir: "/var/log/{{ app_name }}"
+app_run_dir: "/run/{{ app_name }}"
+app_env_file: "/etc/default/{{ app_name }}"
+
+# Networking & Service Ports
+app_port: 8084
+app_bind_address: "0.0.0.0"
+firewall_manage: true
+
+# Java & JVM Runtime Parameters
+java_package_name: "openjdk-17-jre-headless"
+java_min_heap: "256m"
+java_max_heap: "512m"
+java_opts: "-Xms{{ java_min_heap }} -Xmx{{ java_max_heap }} -XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom"
+
+# Database Configuration (H2 Persistent Embedded File Store)
+db_url: "jdbc:h2:file:{{ app_data_dir }}/rlpdb"
+db_username: "sa"
+db_password: ""
+db_ddl_auto: "update"
+
+# OS Packages Required by the Portal
+required_packages:
+  - openjdk-17-jre-headless
+  - curl
+  - wget
+  - net-tools
+  - procps
+  - logrotate
+  - ufw
+  - ca-certificates
+  - unzip
+
+# Service & Daemon Configuration
+service_name: "{{ app_name }}"
+systemd_unit_file: "/etc/systemd/system/{{ app_name }}.service"
+
+# Source Artifact Path (local build artifact)
+local_artifact_path: "/mnt/c/Users/CSC/Downloads/Reverse_Logistics_Task3_Starter/reverse-logistics-portal/target/{{ app_name }}-{{ app_version }}.war"
+target_artifact_path: "{{ app_bin_dir }}/{{ app_name }}.war"

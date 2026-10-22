@@ -1,0 +1,5 @@
+---
+# Defaults for role reverse_logistics_portal
+app_port: 8084
+app_bind_address: "0.0.0.0"
+firewall_manage: true

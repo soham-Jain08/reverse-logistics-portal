@@ -1,0 +1,21 @@
+---
+# ==============================================================================
+# Task: 08_firewall - Port and Firewall Security Rules
+# ==============================================================================
+
+- name: Check if UFW is installed
+  ansible.builtin.command: which ufw
+  register: ufw_check
+  changed_when: false
+  failed_when: false
+
+- name: Allow application incoming traffic on target port via UFW
+  community.general.ufw:
+    rule: allow
+    port: "{{ app_port | string }}"
+    proto: tcp
+    comment: "Reverse Logistics Management Portal HTTP"
+  when:
+    - firewall_manage | bool
+    - ufw_check.rc == 0
+  ignore_errors: true

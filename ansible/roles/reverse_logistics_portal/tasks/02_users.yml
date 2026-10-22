@@ -1,0 +1,23 @@
+---
+# ==============================================================================
+# Task: 02_users - System User and Group Security (Least Privilege)
+# ==============================================================================
+
+- name: Create application system group
+  ansible.builtin.group:
+    name: "{{ app_group }}"
+    gid: "{{ app_group_gid }}"
+    system: true
+    state: present
+
+- name: Create dedicated application system user (Non-Login)
+  ansible.builtin.user:
+    name: "{{ app_user }}"
+    uid: "{{ app_user_uid }}"
+    group: "{{ app_group }}"
+    home: "{{ app_user_home }}"
+    shell: "{{ app_user_shell }}"
+    system: true
+    create_home: false
+    comment: "Reverse Logistics Portal Service Account"
+    state: present

@@ -3,7 +3,7 @@
 **Project:** Automated Reverse Logistics Management Portal  
 **Student:** Soham Kholapure (Roll No. 23102A0064, BE CMPN A)  
 **Methodology:** Agile Scrum (3 Sprints, 15 Tasks)  
-**Last Updated:** Sprint 2 (Task 8 Pipeline as Code and Server Deployment Completion)
+**Last Updated:** Sprint 3 (Task 13 Configuration Management Script Completion)
 
 ---
 
@@ -23,7 +23,7 @@
 | | **TASK-10** | Continuous Testing in Jenkins | CI/CD | **DONE** | Jenkins Test Report, Failed Pipeline Evidence, Defect Correction Commit, Successful Rerun |
 | **Sprint 3** | **TASK-11** | Containerization with Docker | Containers | **DONE** | Dockerfile, image details, Docker log, running container |
 | | **TASK-12** | Jenkins-Docker Continuous Deployment | CI/CD & Containers | **DONE** | Versioned Image, Registry Evidence, End-to-End Commit-to-Container Pipeline |
-| | **TASK-13** | Configuration Management with Ansible | IaC | Backlog | Ansible playbook, automated provisioning |
+| | **TASK-13** | Configuration Management with Ansible | IaC | **DONE** | Configuration Specification, Ansible Playbook, First Execution Log |
 | | **TASK-14** | Automated End-to-End Testing (Selenium) | Testing | Backlog | Selenium test automation suite |
 | | **TASK-15** | Continuous Deployment and Monitoring | Operations | Backlog | CD deployment, Health monitoring & final demo |
 
@@ -283,8 +283,41 @@
 
 ---
 
-## 3. Upcoming Sprint Backlog (Tasks 13 to 15)
+#### TASK-13: Configuration Management Script — COMPLETED
+* **User Story:** As a DevOps engineer, I want to identify all server prerequisites (packages, users, directories, files, ports, and services) and codify target node provisioning using Ansible playbooks, roles, and Jinja2 templates so that we achieve consistent, reproducible, secure, and idempotent automated deployment across environments.
+* **Scope & Completed Capabilities:**
+  1. **Server Prerequisites Specification:**
+     - Packages: `openjdk-17-jre-headless`, `curl`, `wget`, `net-tools`, `procps`, `logrotate`, `ufw`, `ca-certificates`, `unzip`.
+     - Users & Groups: Non-login system user `rlpuser` (UID 1500) and group `rlpgroup` (GID 1500) enforcing Principle of Least Privilege.
+     - Directories: Standardized FHS layout (`/opt/reverse-logistics-portal/bin`, `/etc/reverse-logistics-portal`, `/var/lib/reverse-logistics-portal/data`, `/var/log/reverse-logistics-portal`, `/run/reverse-logistics-portal`).
+     - Configuration Files: Externalized `application.properties` (0640) and `/etc/default/reverse-logistics-portal` (0640) templated with Jinja2.
+     - Service Unit: Systemd unit `/etc/systemd/system/reverse-logistics-portal.service` (0644) with auto-restart (`Restart=always`, `RestartSec=10`) and `LimitNOFILE=65536`.
+     - Log Retention: `/etc/logrotate.d/reverse-logistics-portal` with 14-day rotation and `copytruncate`.
+     - Firewall: Dedicated TCP port `8084` allowed via UFW.
+  2. **Modular Ansible Role Architecture:**
+     - Created `reverse-logistics-portal/ansible/` structure with `ansible.cfg`, `inventory/hosts.ini`, `group_vars/all.yml`, and `playbooks/site.yml`.
+     - Role `reverse_logistics_portal` organized into 9 modular task files (`01_packages.yml` through `09_healthcheck.yml`), handlers, vars, defaults, and templates.
+  3. **First Execution & Health Verification:**
+     - Executed against target node (`localhost` via WSL2 Linux Ubuntu 26.04 LTS).
+     - First run result: 27 tasks executed with `ok=27, changed=12, failed=0`.
+     - Verified Spring Boot Actuator endpoint (`/actuator/health`) reporting `UP` (`components: {db: {status: UP, database: H2}, diskSpace: {status: UP}}`).
+     - Verified HTTP 200 OK on web login portal (`http://localhost:8084/login`).
+  4. **Idempotency & Resilience Validation:**
+     - Re-executed complete playbook against already configured node: verified `ok=26, changed=0, failed=0` (100% idempotent).
+* **Definition of Done (DoD) Checklist:**
+  - [x] Server prerequisites specification documented (packages, users, folders, files, ports, services).
+  - [x] Ansible project structure created (`ansible.cfg`, `inventory/`, `roles/`, `playbooks/`, `templates/`).
+  - [x] Automated role tasks configured for package installation, user/group management, directory creation, templating, systemd service setup, log rotation, firewall rules, and health checks.
+  - [x] Jinja2 templates created for `application.properties`, environment defaults, systemd service, and logrotate.
+  - [x] First execution completed successfully (`ok=27, changed=12, failed=0`).
+  - [x] Service running on dedicated port 8084 and Spring Boot Actuator reporting `UP`.
+  - [x] Playbook idempotency verified (`ok=26, changed=0, failed=0`).
+  - [x] Comprehensive delivery report documented in `docs/TASK13-DELIVERY.md`.
+  - [x] Product backlog updated.
 
-* **TASK-13 (Sprint 3):** Configuration Management with Ansible (automated provisioning & deployment playbook).
-* **TASK-14 (Sprint 3):** Performance, Stress and Load Testing.
-* **TASK-15 (Sprint 3):** Production Monitoring, Live Demo & Final Project Release.
+---
+
+## 3. Upcoming Sprint Backlog (Tasks 14 to 15)
+
+* **TASK-14 (Sprint 3):** Automated End-to-End Testing / Performance & Stress Testing.
+* **TASK-15 (Sprint 3):** Continuous Deployment, Monitoring & Final Project Release.

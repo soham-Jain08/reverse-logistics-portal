@@ -1,0 +1,26 @@
+---
+# ==============================================================================
+# Task: 05_artifact - Deploy Application Executable Archive
+# ==============================================================================
+
+- name: Check if source artifact exists
+  ansible.builtin.stat:
+    path: "{{ local_artifact_path }}"
+  register: artifact_stat
+
+- name: Verify artifact presence before deployment
+  ansible.builtin.assert:
+    that:
+      - artifact_stat.stat.exists
+    fail_msg: "Source artifact {{ local_artifact_path }} not found! Please build the package before provisioning."
+    success_msg: "Source artifact {{ local_artifact_path }} validated (Size: {{ artifact_stat.stat.size }} bytes)."
+
+- name: Deploy application executable WAR to bin directory
+  ansible.builtin.copy:
+    src: "{{ local_artifact_path }}"
+    dest: "{{ target_artifact_path }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0750"
+    remote_src: true
+  notify: Restart reverse-logistics-portal

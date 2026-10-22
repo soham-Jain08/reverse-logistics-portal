@@ -1,0 +1,24 @@
+---
+# ==============================================================================
+# Task: 06_systemd - Systemd Service Unit Lifecycle
+# ==============================================================================
+
+- name: Deploy systemd service unit file
+  ansible.builtin.template:
+    src: reverse-logistics-portal.service.j2
+    dest: "{{ systemd_unit_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd daemon
+    - Restart reverse-logistics-portal
+
+- name: Flush handlers to ensure unit file is reloaded before starting
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start reverse-logistics-portal systemd service
+  ansible.builtin.systemd:
+    name: "{{ service_name }}"
+    enabled: true
+    state: started

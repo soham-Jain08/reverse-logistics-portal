@@ -1,0 +1,40 @@
+---
+# ==============================================================================
+# Role: reverse_logistics_portal - Main Tasks Orchestrator
+# ==============================================================================
+
+- name: "[1/9] Ensure OS packages and Java runtime prerequisites"
+  ansible.builtin.import_tasks: 01_packages.yml
+  tags: [packages, dependencies]
+
+- name: "[2/9] Create dedicated system users and groups"
+  ansible.builtin.import_tasks: 02_users.yml
+  tags: [users, security]
+
+- name: "[3/9] Setup filesystem directory structure and permissions"
+  ansible.builtin.import_tasks: 03_directories.yml
+  tags: [filesystem, directories]
+
+- name: "[4/9] Deploy application configuration and environment variables"
+  ansible.builtin.import_tasks: 04_configuration.yml
+  tags: [config, properties]
+
+- name: "[5/9] Deploy executable application artifact"
+  ansible.builtin.import_tasks: 05_artifact.yml
+  tags: [artifact, deploy]
+
+- name: "[6/9] Configure and manage systemd service unit"
+  ansible.builtin.import_tasks: 06_systemd.yml
+  tags: [systemd, service]
+
+- name: "[7/9] Configure log rotation policy"
+  ansible.builtin.import_tasks: 07_logrotate.yml
+  tags: [logrotate, logging]
+
+- name: "[8/9] Configure firewall and port security"
+  ansible.builtin.import_tasks: 08_firewall.yml
+  tags: [firewall, network]
+
+- name: "[9/9] Verify service health and port responsiveness"
+  ansible.builtin.import_tasks: 09_healthcheck.yml
+  tags: [healthcheck, verification]

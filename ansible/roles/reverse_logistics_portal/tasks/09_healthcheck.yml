@@ -1,0 +1,63 @@
+---
+# ==============================================================================
+# Task: 09_healthcheck - Post-Provisioning Health & Port Verification
+# ==============================================================================
+
+- name: Wait for application port to become active and listening
+  ansible.builtin.wait_for:
+    host: "{{ app_bind_address if app_bind_address != '0.0.0.0' else '127.0.0.1' }}"
+    port: "{{ app_port }}"
+    state: started
+    timeout: 90
+    delay: 5
+
+- name: Query Spring Boot Actuator health endpoint
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ app_port }}/actuator/health"
+    method: GET
+    return_content: true
+    status_code: 200
+  register: actuator_health_response
+  retries: 10
+  delay: 3
+  until: actuator_health_response.status == 200
+
+- name: Assert health endpoint status is UP
+  ansible.builtin.assert:
+    that:
+      - "'UP' in actuator_health_response.content"
+    fail_msg: "Application health check did not report status UP: {{ actuator_health_response.content }}"
+    success_msg: "Application health check verified: {{ actuator_health_response.content }}"
+
+- name: Query application login endpoint
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ app_port }}/login"
+    method: GET
+    status_code: 200
+  register: login_page_response
+
+- name: Assert login page is serving HTTP 200
+  ansible.builtin.assert:
+    that:
+      - login_page_response.status == 200
+    success_msg: "Application login page is serving live HTTP 200 traffic on port {{ app_port }}."
+
+- name: Check systemd service status
+  ansible.builtin.systemd:
+    name: "{{ service_name }}"
+  register: service_status
+
+- name: Display provisioning summary
+  ansible.builtin.debug:
+    msg:
+      - "=========================================================="
+      - "PROVISIONING SUCCESSFUL: Reverse Logistics Management Portal"
+      - "Service State: {{ service_status.status.ActiveState }}"
+      - "Main PID: {{ service_status.status.MainPID }}"
+      - "Listening Port: {{ app_port }}"
+      - "Healthcheck: http://127.0.0.1:{{ app_port }}/actuator/health (Status: UP)"
+      - "Login URL: http://127.0.0.1:{{ app_port }}/login (HTTP 200)"
+      - "Data Directory: {{ app_data_dir }}"
+      - "Log Directory: {{ app_log_dir }}"
+      - "User/Group: {{ app_user }}:{{ app_group }}"
+      - "=========================================================="

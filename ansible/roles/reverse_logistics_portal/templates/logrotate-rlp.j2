@@ -1,0 +1,14 @@
+# ==============================================================================
+# Managed by Ansible - Logrotate Policy for Reverse Logistics Portal
+# ==============================================================================
+
+{{ app_log_dir }}/*.log {
+    daily
+    missingok
+    rotate 14
+    compress
+    delaycompress
+    notifempty
+    create 0640 {{ app_user }} {{ app_group }}
+    copytruncate
+}

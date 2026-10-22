@@ -1,0 +1,22 @@
+---
+# ==============================================================================
+# Task: 04_configuration - Application Properties and Environment Variables
+# ==============================================================================
+
+- name: Deploy application.properties from template
+  ansible.builtin.template:
+    src: application.properties.j2
+    dest: "{{ app_config_dir }}/application.properties"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0640"
+  notify: Restart reverse-logistics-portal
+
+- name: Deploy service environment variables file
+  ansible.builtin.template:
+    src: reverse-logistics-portal.env.j2
+    dest: "{{ app_env_file }}"
+    owner: root
+    group: "{{ app_group }}"
+    mode: "0640"
+  notify: Restart reverse-logistics-portal

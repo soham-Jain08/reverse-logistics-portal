@@ -1,0 +1,28 @@
+# ==============================================================================
+# Managed by Ansible - Reverse Logistics Management Portal Configuration
+# Do not edit manually - changes will be overwritten by Ansible
+# ==============================================================================
+
+spring.application.name={{ app_name }}
+server.port={{ app_port }}
+server.address={{ app_bind_address }}
+
+# Actuator Health & Metrics Exposure
+management.endpoints.web.exposure.include=health,info,metrics
+management.endpoint.health.show-details=always
+
+# Database: H2 persistent embedded store
+spring.datasource.url={{ db_url }}
+spring.datasource.username={{ db_username }}
+spring.datasource.password={{ db_password }}
+spring.datasource.driver-class-name=org.h2.Driver
+spring.jpa.hibernate.ddl-auto={{ db_ddl_auto }}
+spring.jpa.open-in-view=false
+
+# Seed demo data for initial portal population
+app.seed-demo-data=true
+
+# Logging Configuration
+logging.file.name={{ app_log_dir }}/application.log
+logging.level.root=INFO
+logging.level.com.soham.reverselogistics=DEBUG

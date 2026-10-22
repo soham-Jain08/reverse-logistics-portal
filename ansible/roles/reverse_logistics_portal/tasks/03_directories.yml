@@ -1,0 +1,19 @@
+---
+# ==============================================================================
+# Task: 03_directories - Filesystem Hierarchy & Permissions
+# ==============================================================================
+
+- name: Create base application directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ app_base_dir }}", owner: "{{ app_user }}", group: "{{ app_group }}", mode: "0755" }
+    - { path: "{{ app_bin_dir }}", owner: "{{ app_user }}", group: "{{ app_group }}", mode: "0750" }
+    - { path: "{{ app_config_dir }}", owner: "{{ app_user }}", group: "{{ app_group }}", mode: "0750" }
+    - { path: "{{ app_data_dir }}", owner: "{{ app_user }}", group: "{{ app_group }}", mode: "0750" }
+    - { path: "{{ app_log_dir }}", owner: "{{ app_user }}", group: "{{ app_group }}", mode: "0755" }
+    - { path: "{{ app_run_dir }}", owner: "{{ app_user }}", group: "{{ app_group }}", mode: "0755" }

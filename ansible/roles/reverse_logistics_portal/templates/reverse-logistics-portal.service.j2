@@ -1,0 +1,30 @@
+[Unit]
+Description={{ app_description }}
+After=network.target syslog.target
+Wants=network.target
+
+[Service]
+Type=simple
+User={{ app_user }}
+Group={{ app_group }}
+EnvironmentFile=-{{ app_env_file }}
+WorkingDirectory={{ app_base_dir }}
+ExecStart=/usr/bin/java $JAVA_OPTS -jar {{ target_artifact_path }} --spring.config.additional-location=file:{{ app_config_dir }}/
+Restart=always
+RestartSec=10
+StandardOutput=append:{{ app_log_dir }}/console.log
+StandardError=append:{{ app_log_dir }}/console-error.log
+
+# Resource Limits & Security Hardening
+LimitNOFILE=65536
+LimitNPROC=4096
+TimeoutStopSec=30
+SuccessExitStatus=143
+
+# Sandboxing
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+---
+# ==============================================================================
+# Handlers: Reverse Logistics Management Portal
+# ==============================================================================
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart reverse-logistics-portal
+  ansible.builtin.systemd:
+    name: "{{ service_name }}"
+    state: restarted

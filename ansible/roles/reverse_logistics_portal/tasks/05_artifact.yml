@@ -1,6 +1,6 @@
 ---
 # ==============================================================================
-# Task: 05_artifact - Deploy Application Executable Archive
+# Task: 05_artifact - Versioned Deployment & Release Symlink Management
 # ==============================================================================
 
 - name: Check if source artifact exists
@@ -15,12 +15,89 @@
     fail_msg: "Source artifact {{ local_artifact_path }} not found! Please build the package before provisioning."
     success_msg: "Source artifact {{ local_artifact_path }} validated (Size: {{ artifact_stat.stat.size }} bytes)."
 
-- name: Deploy application executable WAR to bin directory
+- name: Check existing bin WAR file state
+  ansible.builtin.stat:
+    path: "{{ target_artifact_path }}"
+  register: artifact_bin_stat
+
+- name: Remove legacy regular WAR file in bin if present before symlinking
+  ansible.builtin.file:
+    path: "{{ target_artifact_path }}"
+    state: absent
+  when:
+    - artifact_bin_stat.stat.exists
+    - not (artifact_bin_stat.stat.islnk | default(false))
+
+- name: Ensure target versioned release directory exists
+  ansible.builtin.file:
+    path: "{{ app_releases_dir }}/{{ release_version }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0750"
+
+- name: Deploy application executable WAR to versioned release directory
   ansible.builtin.copy:
     src: "{{ local_artifact_path }}"
-    dest: "{{ target_artifact_path }}"
+    dest: "{{ app_releases_dir }}/{{ release_version }}/{{ app_name }}.war"
     owner: "{{ app_user }}"
     group: "{{ app_group }}"
     mode: "0750"
     remote_src: true
+  register: war_deploy_result
+
+- name: Generate release metadata manifest
+  ansible.builtin.copy:
+    dest: "{{ app_releases_dir }}/{{ release_version }}/release-manifest.json"
+    content: |
+      {
+        "app_name": "{{ app_name }}",
+        "release_version": "{{ release_version }}",
+        "artifact_file": "{{ app_name }}.war",
+        "artifact_size_bytes": {{ artifact_stat.stat.size }},
+        "target_port": {{ app_port }},
+        "environment": "{{ app_env }}",
+        "status": "active"
+      }
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0640"
+  register: manifest_result
+
+- name: Inspect current active release symlink
+  ansible.builtin.stat:
+    path: "{{ app_current_link }}"
+  register: current_symlink_stat
+
+- name: Record previous release symlink if deploying a new release
+  ansible.builtin.file:
+    src: "{{ current_symlink_stat.stat.lnk_target }}"
+    dest: "{{ app_previous_link }}"
+    state: link
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+  when:
+    - current_symlink_stat.stat.islnk is defined
+    - current_symlink_stat.stat.islnk
+    - current_symlink_stat.stat.lnk_target != (app_releases_dir ~ '/' ~ release_version)
+
+- name: Atomically update current symlink to target release
+  ansible.builtin.file:
+    src: "{{ app_releases_dir }}/{{ release_version }}"
+    dest: "{{ app_current_link }}"
+    state: link
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    force: true
+  register: current_symlink_result
+
+- name: Symlink target executable WAR in bin to active release WAR
+  ansible.builtin.file:
+    src: "{{ app_current_link }}/{{ app_name }}.war"
+    dest: "{{ target_artifact_path }}"
+    state: link
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    force: true
+  register: bin_symlink_result
   notify: Restart reverse-logistics-portal

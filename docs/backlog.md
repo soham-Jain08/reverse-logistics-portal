@@ -3,7 +3,7 @@
 **Project:** Automated Reverse Logistics Management Portal  
 **Student:** Soham Kholapure (Roll No. 23102A0064, BE CMPN A)  
 **Methodology:** Agile Scrum (3 Sprints, 15 Tasks)  
-**Last Updated:** Sprint 3 (Task 13 Configuration Management Script Completion)
+**Last Updated:** Sprint 3 (Task 14 Automated Provisioning & Reliability Validation Completion)
 
 ---
 
@@ -24,7 +24,7 @@
 | **Sprint 3** | **TASK-11** | Containerization with Docker | Containers | **DONE** | Dockerfile, image details, Docker log, running container |
 | | **TASK-12** | Jenkins-Docker Continuous Deployment | CI/CD & Containers | **DONE** | Versioned Image, Registry Evidence, End-to-End Commit-to-Container Pipeline |
 | | **TASK-13** | Configuration Management with Ansible | IaC | **DONE** | Configuration Specification, Ansible Playbook, First Execution Log |
-| | **TASK-14** | Automated End-to-End Testing (Selenium) | Testing | Backlog | Selenium test automation suite |
+| | **TASK-14** | Automated Provisioning & Reliability Validation | IaC & Reliability | **DONE** | Provisioned Node, Idempotency Evidence, Health-Check Result, Rollback/Recovery Demonstration |
 | | **TASK-15** | Continuous Deployment and Monitoring | Operations | Backlog | CD deployment, Health monitoring & final demo |
 
 ---
@@ -317,7 +317,39 @@
 
 ---
 
-## 3. Upcoming Sprint Backlog (Tasks 14 to 15)
+#### TASK-14: Automated Provisioning and Reliability Validation — COMPLETED
+* **User Story:** As a DevOps engineer, I want to provision a clean target environment using Ansible, deploy the release artifact through atomic symlinks, prove playbook idempotency on subsequent runs, perform automated healthcheck assertions against Actuator and web endpoints, and validate both operator-driven rollback and autonomous self-healing recovery so that the application achieves enterprise reliability and resilience.
+* **Scope & Completed Capabilities:**
+  1. **Release Architecture & Clean Provisioning:**
+     - Provisioned target node (`localhost` on Ubuntu 26.04 LTS x86_64) using `playbooks/provision_clean.yml`.
+     - Deployed release `v1.0.0` with standard FHS layout, versioned releases directory (`/opt/reverse-logistics-portal/releases/v1.0.0`), and atomic symlinks (`current`, `previous`, and `bin/reverse-logistics-portal.war`).
+     - Systemd service `reverse-logistics-portal.service` bound to port `8084` with `RuntimeDirectory` isolation.
+  2. **Pure Idempotency Validation:**
+     - Executed a clean second run of `playbooks/provision_clean.yml` on the provisioned node.
+     - Result: `ok=33, changed=0, failed=0, skipped=4, rescued=0`.
+     - Zero unintended modifications, zero task failures, zero unnecessary service restarts.
+  3. **Automated Health Probing:**
+     - Spring Boot Actuator probe (`/actuator/health`): validated status `UP`, DB `UP` (H2), and diskSpace `UP`.
+     - Web Portal probe (`/login`): confirmed HTTP 200 OK.
+  4. **Rollback & Autonomous Recovery Demonstration:**
+     - Executed 4-stage validation suite via `playbooks/test_reliability_recovery.yml`.
+     - **Stage 1 (Baseline):** Verified stable release `v1.0.0` is UP.
+     - **Stage 2 (Version Upgrade):** Deployed release `v1.1.0` and verified health.
+     - **Stage 3 (Operator Rollback):** Atomically rolled back to previous stable release `v1.0.0`, restarted service, and verified health recovery.
+     - **Stage 4 (Autonomous Self-Healing):** Staged corrupted non-bootable candidate `v1.2.0-canary`; trapped healthcheck failure via `block/rescue`, automatically reverted symlink to `v1.0.0`, restarted service, verified health recovery (`ok=38, changed=16, failed=0, rescued=1`), and recorded audit log in `/var/log/reverse-logistics-portal/rollback.log`.
+* **Definition of Done (DoD) Checklist:**
+  - [x] Clean target environment provisioned using Ansible.
+  - [x] Application deployed using versioned release structure and atomic symlinks.
+  - [x] Playbook idempotency proven with `changed=0, failed=0`.
+  - [x] Live health check verified via Actuator (`UP`) and login endpoint (HTTP 200).
+  - [x] Operator-driven rollback tested and verified.
+  - [x] Autonomous recovery / self-healing tested and verified via `block/rescue`.
+  - [x] Rollback audit log generated and verified (`rollback.log`).
+  - [x] Full delivery report documented in `docs/TASK14-DELIVERY.md`.
+  - [x] Product backlog updated.
 
-* **TASK-14 (Sprint 3):** Automated End-to-End Testing / Performance & Stress Testing.
-* **TASK-15 (Sprint 3):** Continuous Deployment, Monitoring & Final Project Release.
+---
+
+## 3. Upcoming Sprint Backlog (Task 15)
+
+* **TASK-15 (Sprint 3):** Continuous Deployment, Monitoring, Live Demo & Final Project Release.

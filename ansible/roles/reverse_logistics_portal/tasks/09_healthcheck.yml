@@ -47,11 +47,18 @@
     name: "{{ service_name }}"
   register: service_status
 
-- name: Display provisioning summary
+- name: Inspect current active release symlink target
+  ansible.builtin.stat:
+    path: "{{ app_current_link }}"
+  register: active_release_stat
+
+- name: Display provisioning and healthcheck summary
   ansible.builtin.debug:
     msg:
       - "=========================================================="
-      - "PROVISIONING SUCCESSFUL: Reverse Logistics Management Portal"
+      - "PROVISIONING & HEALTHCHECK SUCCESSFUL"
+      - "Application: {{ app_name }}"
+      - "Active Release Path: {{ active_release_stat.stat.lnk_target | default('N/A') }}"
       - "Service State: {{ service_status.status.ActiveState }}"
       - "Main PID: {{ service_status.status.MainPID }}"
       - "Listening Port: {{ app_port }}"

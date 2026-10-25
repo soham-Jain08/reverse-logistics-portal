@@ -1,0 +1,120 @@
+---
+# ==============================================================================
+# Playbook: Automated Rollback & Recovery to Previous Stable Release
+# ==============================================================================
+
+- name: Rollback Application to Previous Stable Release
+  hosts: portal_nodes
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Display rollback initiation
+      ansible.builtin.debug:
+        msg:
+          - "=========================================================="
+          - "INITIATING AUTOMATED ROLLBACK: {{ inventory_hostname }}"
+          - "Time: {{ ansible_date_time.iso8601 }}"
+          - "=========================================================="
+
+    - name: Inspect current active release symlink
+      ansible.builtin.stat:
+        path: "{{ app_current_link }}"
+      register: current_stat
+
+    - name: Inspect previous stable release symlink
+      ansible.builtin.stat:
+        path: "{{ app_previous_link }}"
+      register: previous_stat
+
+    - name: Assert previous stable release exists and is valid
+      ansible.builtin.assert:
+        that:
+          - previous_stat.stat.exists
+          - previous_stat.stat.islnk
+          - previous_stat.stat.lnk_target is defined
+        fail_msg: "Cannot rollback: No previous release symlink found at {{ app_previous_link }}!"
+        success_msg: "Validated previous release target: {{ previous_stat.stat.lnk_target }}"
+
+    - name: Capture target release path for rollback
+      ansible.builtin.set_fact:
+        rollback_target_dir: "{{ previous_stat.stat.lnk_target }}"
+        failed_release_dir: "{{ current_stat.stat.lnk_target | default('unknown') }}"
+
+    - name: Atomically update current symlink to previous stable release
+      ansible.builtin.file:
+        src: "{{ rollback_target_dir }}"
+        dest: "{{ app_current_link }}"
+        state: link
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        force: true
+      register: rollback_symlink_result
+
+    - name: Ensure bin WAR link points to recovered release WAR
+      ansible.builtin.file:
+        src: "{{ app_current_link }}/{{ app_name }}.war"
+        dest: "{{ target_artifact_path }}"
+        state: link
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        force: true
+
+    - name: Restart application service to activate rolled-back release
+      ansible.builtin.systemd:
+        name: "{{ service_name }}"
+        state: restarted
+
+    - name: Wait for application port to become available
+      ansible.builtin.wait_for:
+        host: "127.0.0.1"
+        port: "{{ app_port }}"
+        state: started
+        timeout: 90
+        delay: 5
+
+    - name: Verify Spring Boot Actuator health endpoint post-rollback
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ app_port }}/actuator/health"
+        method: GET
+        return_content: true
+        status_code: 200
+      register: rollback_health_check
+      retries: 10
+      delay: 3
+      until: rollback_health_check.status == 200
+
+    - name: Assert service is healthy post-rollback
+      ansible.builtin.assert:
+        that:
+          - "'UP' in rollback_health_check.content"
+        fail_msg: "Service failed healthcheck after rollback to {{ rollback_target_dir }}"
+        success_msg: "Service is UP and healthy following rollback."
+
+    - name: Verify login endpoint responsiveness post-rollback
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ app_port }}/login"
+        method: GET
+        status_code: 200
+      register: rollback_login_check
+
+    - name: Record rollback event in audit log
+      ansible.builtin.lineinfile:
+        path: "{{ app_rollback_log }}"
+        create: true
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: "0640"
+        line: "[{{ ansible_date_time.iso8601 }}] ROLLBACK SUCCESSFUL | From: {{ failed_release_dir }} | To: {{ rollback_target_dir }} | Actuator: UP | Port: {{ app_port }}"
+
+    - name: Display rollback completion summary
+      ansible.builtin.debug:
+        msg:
+          - "=========================================================="
+          - "ROLLBACK & RECOVERY VALIDATED SUCCESSFULLY"
+          - "Rolled Back From: {{ failed_release_dir }}"
+          - "Restored Release: {{ rollback_target_dir }}"
+          - "Service Health: UP"
+          - "Login Endpoint: HTTP 200 OK"
+          - "Audit Log: {{ app_rollback_log }}"
+          - "=========================================================="

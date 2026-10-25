@@ -1,0 +1,45 @@
+---
+# ==============================================================================
+# Playbook: Clean Environment Provisioning - Reverse Logistics Portal
+# ==============================================================================
+
+- name: Provision Clean Target Node Environment
+  hosts: portal_nodes
+  become: true
+  gather_facts: true
+
+  vars:
+    force_clean: false
+    release_version: "v1.0.0"
+
+  pre_tasks:
+    - name: Display provisioning target information
+      ansible.builtin.debug:
+        msg:
+          - "=========================================================="
+          - "TARGET ENVIRONMENT PROVISIONING: {{ inventory_hostname }}"
+          - "Operating System: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}"
+          - "Architecture: {{ ansible_facts['architecture'] }}"
+          - "Initial Release Target: {{ release_version }}"
+          - "Force Clean Mode: {{ force_clean }}"
+          - "=========================================================="
+
+    - name: Stop existing application service if force_clean is enabled
+      ansible.builtin.systemd:
+        name: "{{ service_name }}"
+        state: stopped
+      when: force_clean | bool
+      ignore_errors: true
+
+    - name: Clean legacy release artifacts if force_clean is enabled
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ app_base_dir }}/releases"
+        - "{{ app_base_dir }}/current"
+        - "{{ app_base_dir }}/previous"
+      when: force_clean | bool
+
+  roles:
+    - role: reverse_logistics_portal

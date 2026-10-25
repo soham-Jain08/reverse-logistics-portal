@@ -21,10 +21,12 @@ LimitNPROC=4096
 TimeoutStopSec=30
 SuccessExitStatus=143
 
-# Sandboxing
+# Sandboxing & Runtime Directory
 ProtectSystem=full
 ProtectHome=true
 PrivateTmp=true
+RuntimeDirectory={{ app_name }}
+RuntimeDirectoryMode=0755
 
 [Install]
 WantedBy=multi-user.target

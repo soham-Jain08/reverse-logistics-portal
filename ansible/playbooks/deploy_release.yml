@@ -1,0 +1,146 @@
+---
+# ==============================================================================
+# Playbook: Deploy Specific Versioned Release - Reverse Logistics Portal
+# ==============================================================================
+
+- name: Deploy Versioned Application Release
+  hosts: portal_nodes
+  become: true
+  gather_facts: true
+
+  vars:
+    release_version: "v1.1.0"
+    release_notes: "Enhanced telemetry, healthcheck metrics, and performance optimizations"
+
+  tasks:
+    - name: Display release deployment parameters
+      ansible.builtin.debug:
+        msg:
+          - "=========================================================="
+          - "DEPLOYING RELEASE: {{ release_version }}"
+          - "Target Host: {{ inventory_hostname }}"
+          - "Release Notes: {{ release_notes }}"
+          - "=========================================================="
+
+    - name: Verify source artifact exists
+      ansible.builtin.stat:
+        path: "{{ local_artifact_path }}"
+      register: artifact_stat
+
+    - name: Assert source artifact is available
+      ansible.builtin.assert:
+        that:
+          - artifact_stat.stat.exists
+        fail_msg: "Source artifact {{ local_artifact_path }} not found!"
+
+    - name: Inspect current active release symlink
+      ansible.builtin.stat:
+        path: "{{ app_current_link }}"
+      register: current_symlink_stat
+
+    - name: Record previous release symlink if active release exists
+      ansible.builtin.file:
+        src: "{{ current_symlink_stat.stat.lnk_target }}"
+        dest: "{{ app_previous_link }}"
+        state: link
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        force: true
+      when:
+        - current_symlink_stat.stat.islnk is defined
+        - current_symlink_stat.stat.islnk
+        - current_symlink_stat.stat.lnk_target != (app_releases_dir ~ '/' ~ release_version)
+
+    - name: Create versioned release directory
+      ansible.builtin.file:
+        path: "{{ app_releases_dir }}/{{ release_version }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: "0750"
+
+    - name: Deploy release WAR to versioned directory
+      ansible.builtin.copy:
+        src: "{{ local_artifact_path }}"
+        dest: "{{ app_releases_dir }}/{{ release_version }}/{{ app_name }}.war"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: "0750"
+        remote_src: true
+
+    - name: Generate release manifest
+      ansible.builtin.copy:
+        dest: "{{ app_releases_dir }}/{{ release_version }}/release-manifest.json"
+        content: |
+          {
+            "app_name": "{{ app_name }}",
+            "release_version": "{{ release_version }}",
+            "artifact_file": "{{ app_name }}.war",
+            "artifact_size_bytes": {{ artifact_stat.stat.size }},
+            "deployed_at": "{{ ansible_date_time.iso8601 }}",
+            "target_port": {{ app_port }},
+            "release_notes": "{{ release_notes }}",
+            "status": "active"
+          }
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: "0640"
+
+    - name: Atomically switch current symlink to new release
+      ansible.builtin.file:
+        src: "{{ app_releases_dir }}/{{ release_version }}"
+        dest: "{{ app_current_link }}"
+        state: link
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        force: true
+
+    - name: Ensure bin WAR points to current release WAR
+      ansible.builtin.file:
+        src: "{{ app_current_link }}/{{ app_name }}.war"
+        dest: "{{ target_artifact_path }}"
+        state: link
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        force: true
+
+    - name: Restart systemd application service
+      ansible.builtin.systemd:
+        name: "{{ service_name }}"
+        state: restarted
+
+    - name: Wait for application port to respond
+      ansible.builtin.wait_for:
+        host: "127.0.0.1"
+        port: "{{ app_port }}"
+        state: started
+        timeout: 90
+        delay: 5
+
+    - name: Query Spring Boot Actuator health endpoint
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ app_port }}/actuator/health"
+        method: GET
+        return_content: true
+        status_code: 200
+      register: health_check
+      retries: 10
+      delay: 3
+      until: health_check.status == 200
+
+    - name: Assert health endpoint reports UP
+      ansible.builtin.assert:
+        that:
+          - "'UP' in health_check.content"
+        fail_msg: "Healthcheck failed after deploying {{ release_version }}"
+
+    - name: Display deployment success
+      ansible.builtin.debug:
+        msg:
+          - "=========================================================="
+          - "RELEASE {{ release_version }} DEPLOYED SUCCESSFULLY"
+          - "Health Status: UP"
+          - "Actuator Response: {{ health_check.content }}"
+          - "Active Release: {{ app_releases_dir }}/{{ release_version }}"
+          - "Previous Release: {{ current_symlink_stat.stat.lnk_target | default('None') }}"
+          - "=========================================================="

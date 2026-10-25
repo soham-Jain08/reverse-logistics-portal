@@ -62,3 +62,12 @@ systemd_unit_file: "/etc/systemd/system/{{ app_name }}.service"
 # Source Artifact Path (local build artifact)
 local_artifact_path: "/mnt/c/Users/CSC/Downloads/Reverse_Logistics_Task3_Starter/reverse-logistics-portal/target/{{ app_name }}-{{ app_version }}.war"
 target_artifact_path: "{{ app_bin_dir }}/{{ app_name }}.war"
+
+# Versioning, Releases & Reliability Management
+release_version: "v1.0.0"
+app_releases_dir: "{{ app_base_dir }}/releases"
+app_shared_dir: "{{ app_base_dir }}/shared"
+app_backup_dir: "{{ app_base_dir }}/backups"
+app_current_link: "{{ app_base_dir }}/current"
+app_previous_link: "{{ app_base_dir }}/previous"
+app_rollback_log: "{{ app_log_dir }}/rollback.log"

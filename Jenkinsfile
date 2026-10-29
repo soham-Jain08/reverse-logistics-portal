@@ -11,8 +11,8 @@ pipeline {
     }
 
     environment {
-        JAVA_HOME = 'C:\\Program Files\\Java\\jdk-26'
-        PATH = "${JAVA_HOME}\\bin;${env.PATH}"
+        JAVA_HOME = '/opt/java/openjdk'
+        PATH = "${JAVA_HOME}/bin:${env.PATH}"
     }
 
     stages {
@@ -34,7 +34,7 @@ pipeline {
                 echo "Executing Selenium WebDriver user journeys & unit tests..."
                 echo "Target portal URL for browser tests: ${params.APP_TEST_URL}"
                 echo "=========================================================="
-                bat "call mvnw.cmd test -Dapp.url=${params.APP_TEST_URL}"
+                sh "chmod +x mvnw && ./mvnw test -Dapp.url=${params.APP_TEST_URL}"
             }
             post {
                 always {
@@ -52,7 +52,7 @@ pipeline {
                 echo "STAGE 3: PACKAGE (EXECUTABLE WAR)"
                 echo "Quality gate passed! Packaging release artifact..."
                 echo "=========================================================="
-                bat 'call mvnw.cmd package -DskipTests=true'
+                sh 'chmod +x mvnw && ./mvnw package -DskipTests=true'
                 archiveArtifacts artifacts: 'target/*.war', fingerprint: true
             }
         }
@@ -65,11 +65,11 @@ pipeline {
                 echo "Image Repository: ${params.IMAGE_NAME}"
                 echo "Version Tag: build-${env.BUILD_NUMBER}"
                 echo "=========================================================="
-                bat """
+                sh """
                     docker build -t ${params.DOCKER_REGISTRY}/${params.IMAGE_NAME}:build-${env.BUILD_NUMBER} -t ${params.DOCKER_REGISTRY}/${params.IMAGE_NAME}:latest -t ${params.IMAGE_NAME}:build-${env.BUILD_NUMBER} -t ${params.IMAGE_NAME}:latest .
                 """
                 echo "Image build successful. Inspecting built image:"
-                bat "docker images ${params.IMAGE_NAME}"
+                sh "docker images ${params.IMAGE_NAME}"
             }
         }
 
@@ -79,12 +79,12 @@ pipeline {
                 echo "STAGE 5: PUBLISH IMAGE TO REGISTRY"
                 echo "Pushing versioned image and latest tag to ${params.DOCKER_REGISTRY}..."
                 echo "=========================================================="
-                bat """
+                sh """
                     docker push ${params.DOCKER_REGISTRY}/${params.IMAGE_NAME}:build-${env.BUILD_NUMBER}
                     docker push ${params.DOCKER_REGISTRY}/${params.IMAGE_NAME}:latest
                 """
                 echo "Verifying image in Docker Registry catalog:"
-                bat "curl.exe -s http://${params.DOCKER_REGISTRY}/v2/${params.IMAGE_NAME}/tags/list"
+                sh "curl -s http://${params.DOCKER_REGISTRY}/v2/${params.IMAGE_NAME}/tags/list"
             }
         }
 
@@ -95,15 +95,15 @@ pipeline {
                 echo "Deploying fresh container '${params.CONTAINER_NAME}' on port ${params.HOST_PORT}..."
                 echo "Deploying image: ${params.DOCKER_REGISTRY}/${params.IMAGE_NAME}:build-${env.BUILD_NUMBER}"
                 echo "=========================================================="
-                bat """
-                    docker stop ${params.CONTAINER_NAME} >nul 2>&1 || ver >nul
-                    docker rm -f ${params.CONTAINER_NAME} >nul 2>&1 || ver >nul
-                    docker stop rlp-container >nul 2>&1 || ver >nul
-                    docker rm -f rlp-container >nul 2>&1 || ver >nul
+                sh """
+                    docker stop ${params.CONTAINER_NAME} || true
+                    docker rm -f ${params.CONTAINER_NAME} || true
+                    docker stop rlp-container || true
+                    docker rm -f rlp-container || true
                     docker run -d --name ${params.CONTAINER_NAME} -p ${params.HOST_PORT}:8080 ${params.DOCKER_REGISTRY}/${params.IMAGE_NAME}:build-${env.BUILD_NUMBER}
                 """
                 echo "Verifying deployed container status:"
-                bat "docker ps --filter \"name=${params.CONTAINER_NAME}\""
+                sh "docker ps --filter \"name=${params.CONTAINER_NAME}\""
             }
         }
 
@@ -115,9 +115,9 @@ pipeline {
                 echo "=========================================================="
                 sleep time: 25, unit: 'SECONDS'
                 echo "Probing container health endpoint with automatic retry..."
-                bat "curl.exe --retry 15 --retry-delay 5 --retry-connrefused -s -f http://localhost:${params.HOST_PORT}/actuator/health"
+                sh "curl --retry 15 --retry-delay 5 --retry-connrefused -s -f http://localhost:${params.HOST_PORT}/actuator/health"
                 echo "Probing container login endpoint..."
-                bat "curl.exe --retry 10 --retry-delay 3 --retry-connrefused -s -o nul -w \"HTTP STATUS: %%{http_code}\" http://localhost:${params.HOST_PORT}/login"
+                sh "curl --retry 10 --retry-delay 3 --retry-connrefused -s -o /dev/null -w \"HTTP STATUS: %{http_code}\" http://localhost:${params.HOST_PORT}/login"
                 echo "Fresh container is healthy and serving HTTP traffic!"
             }
         }

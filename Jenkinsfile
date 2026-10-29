@@ -34,7 +34,16 @@ pipeline {
                 echo "Executing Selenium WebDriver user journeys & unit tests..."
                 echo "Target portal URL for browser tests: ${params.APP_TEST_URL}"
                 echo "=========================================================="
-                sh "chmod +x mvnw && ./mvnw test -Dapp.url=${params.APP_TEST_URL}"
+                sh """
+                    chmod +x mvnw
+                    ./mvnw package -DskipTests=true -q
+                    nohup java -jar target/*.war --server.port=8081 > /tmp/app.log 2>&1 &
+                    echo "Waiting for app to start..."
+                    sleep 30
+                    curl --retry 15 --retry-delay 5 --retry-connrefused -s -f http://localhost:8081/actuator/health
+                    echo "App is up, running tests..."
+                    ./mvnw test -Dapp.url=http://localhost:8081 -Dsurefire.failIfNoSpecifiedTests=false
+                """
             }
             post {
                 always {

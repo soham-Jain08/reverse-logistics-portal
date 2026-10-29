@@ -56,6 +56,7 @@ public class DriverFactory {
                         "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows",
                         "--disable-features=IsolateOrigins,site-per-process",
                         "--blink-settings=imagesEnabled=false",
+                        "--no-zygote", "--single-process",
                         "--window-size=1920,1080", "--remote-allow-origins=*");
                 // Windows path
                 File chromeBin = new File("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe");
@@ -77,7 +78,12 @@ public class DriverFactory {
                     "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows",
                     "--disable-features=IsolateOrigins,site-per-process",
                     "--blink-settings=imagesEnabled=false",
+                    "--no-zygote", "--single-process",
                     "--window-size=1920,1080", "--remote-allow-origins=*");
+            File chromeBinLinuxFallback = new File("/usr/bin/google-chrome-stable");
+            if (chromeBinLinuxFallback.exists()) {
+                options.setBinary(chromeBinLinuxFallback);
+            }
             driver = new ChromeDriver(options);
         }
 

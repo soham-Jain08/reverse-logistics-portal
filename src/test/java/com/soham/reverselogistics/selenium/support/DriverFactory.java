@@ -57,9 +57,14 @@ public class DriverFactory {
                         "--disable-features=IsolateOrigins,site-per-process",
                         "--blink-settings=imagesEnabled=false",
                         "--window-size=1920,1080", "--remote-allow-origins=*");
+                // Windows path
                 File chromeBin = new File("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe");
+                // Linux path (Docker/CI)
+                File chromeBinLinux = new File("/usr/bin/google-chrome-stable");
                 if (chromeBin.exists()) {
                     options.setBinary(chromeBin);
+                } else if (chromeBinLinux.exists()) {
+                    options.setBinary(chromeBinLinux);
                 }
                 driver = new ChromeDriver(options);
             }
